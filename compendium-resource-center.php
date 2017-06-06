@@ -17,22 +17,18 @@ global $compendium_save_as; // the `option_name` field in the `wp_options` table
 $compendium_save_as = 'compendiumresourcecenter';
 
 //Get Post types
-global $post_types;
 $post_types = get_post_types();
 
 global $compendium_option_list;
 foreach ($post_types as $type) {
     $compendium_option_list[] = array(
-        'description'   => $type->name,
-        'db_name'       => 'active-'.$type->name,
+        'description'   => $type,
+        'db_name'       => 'active-'.$type,
         'init'          => '0'
     );
 }
-$compendium_option_list[] = array(
-        'description'   => 'Posts per page',
-        'db_name'       => 'compendium-posts-per-page',
-        'init'          => '22'
-);
+
+
 
 /**--------------------------------------------------------
  *
@@ -120,19 +116,24 @@ add_filter( 'query_vars', 'add_query_vars_filter' );
  *  Function that outputs when shortcode is called
  *
  *-------------------------------------------------------*/
-function show_compendium_content($compendium_options){
+function show_compendium_content(){
     global $compendium_option_list;
     ob_start();
     echo '<h3>Compendium Resource Center</h3>'.PHP_EOL;
-    foreach($compendium_option_list as $option) {
-        ?>
-        <p>
-            <input name="<?=$option['db_name']?>" type="checkbox" value="1" <?php if ($compendium_options[$option['db_name']] === '1') { echo ' checked="checked"'; } ?> />
-            &nbsp; <?=$option['description']?>
-        </p>
-        <?
-
-    }
+    global $post; if( !empty($post->post_content) ) : ?>
+        <div class="inner clearfix">
+            <article class="basic-content editor-styles form-styles">
+                <?php
+                    while( have_posts() )
+                    {
+                        the_post();
+                        the_content();
+                    }
+                ?>
+            </article>
+        </div>
+        <?php endif; ?>
+    <?php  Compendium_Resources::do_resoures();
     return ob_get_clean();
 }
 
@@ -212,28 +213,28 @@ function compendium_resource_options() {
     <div class="wrap">
         <h2>Compendium Resource Center Settings</h2>
         <form name="resource_options" method="post" action="">
-            <input type="hidden" name="<?=$hidden_field_name?>" value="Y">
+            <div class="metabox">
+                <div class="inside">
+                    <h3>Please select the posts types to be displayed in resource center.</h3>
+                    <input type="hidden" name="<?=$hidden_field_name?>" value="Y">
 
-            <pre>
-                <?php print_r($post_types); ?>
-            </pre>
+                    <?php
+                    foreach($compendium_option_list as $option) {
+                        ?>
+                        <p>
+                            <input name="<?=$option['db_name']?>" type="checkbox" value="1" <?php if ($compendium_options[$option['db_name']] === '1') { echo ' checked="checked"'; } ?> />
+                            &nbsp; <?=$option['description']?>
+                        </p>
 
-            <?php
-            foreach($compendium_option_list as $option) {
-                ?>
-                <p>
-                    <input name="<?=$option['db_name']?>" type="checkbox" value="1" <?php if ($compendium_options[$option['db_name']] === '1') { echo ' checked="checked"'; } ?> />
-                    &nbsp; <?=$option['description']?>
-                </p>
+                        <?php
+                    }
 
-
-                <?php
-            }
-
-            ?>
+                    ?>
+                </div>
+            </div>
             <p>
+                <?=$compendium_posts_per_page['description']?>
                 <input name="posts-per-page" type="number" value="<?=$compendium_posts_per_page['value'] ?>" />
-                    <?=$compendium_posts_per_page['description']?>
             </p>
 
             <p class="submit">

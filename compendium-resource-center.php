@@ -7,6 +7,7 @@
 */
 
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+require_once dirname( __FILE__ ) .'/compendium-resources.php';
 
 /**--------------------------------------------------------
  *
@@ -14,19 +15,25 @@ defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
  *
  *-------------------------------------------------------*/
 global $compendium_save_as; // the `option_name` field in the `wp_options` table
+global $compendium_active_posts;
 $compendium_save_as = 'compendiumresourcecenter';
 
-//Get Post types
-$post_types = get_post_types();
+//Get Post types after load
+add_action( 'wp_loaded', 'compendium_get_post_types');
+function compendium_get_post_types(){
+    global $compendium_active_posts;
+    $post_types = get_post_types();
 
-global $compendium_option_list;
-foreach ($post_types as $type) {
-    $compendium_option_list[] = array(
-        'description'   => $type,
-        'db_name'       => 'active-'.$type,
-        'init'          => '0'
-    );
+
+    foreach ($post_types as $type) {
+        $compendium_active_posts[] = array(
+            'description'   => $type,
+            'db_name'       => 'active-'.$type,
+            'init'          => '0'
+        );
+    }
 }
+
 
 
 
@@ -39,23 +46,21 @@ function compendium_scripts() {
     wp_register_script( 'compendium-js', plugins_url( '/js/scripts.js', __FILE__ ), array( 'jquery' ) );
     wp_register_script( 'compendium-jquery-ui', plugins_url( 'jquery-ui', 'https://code.jquery.com/ui/1.12.1/jquery-ui.min.js', __FILE__ ), array( 'jquery' ), null, true );
     wp_register_script( 'compendium-page-js', plugins_url( '/js/page-scripts.js', __FILE__ ), array( 'jquery' ) );
-    wp_enqueue_script( 'compendium-js' );
-    wp_enqueue_script( 'compendium-jquery-ui' );
-    wp_enqueue_script( 'compendium-page-js' );
 }
 add_action( 'wp_enqueue_scripts', 'compendium_scripts', 10 );
 
-function resource_styles() {
+function compendium_styles() {
     wp_register_style( 'compendium-css', plugins_url( '/css/styles.css', __FILE__ ) );
     wp_register_style( 'jquery-ui', plugins_url('css/jquery-ui.min.css', __FILE__ ), array(), null );
     wp_register_style( 'jquery-ui-structure', plugins_url('css/jquery-ui.structure.min.css', __FILE__ ), array('jquery-ui'), null );
     wp_register_style( 'jquery-ui-theme', plugins_url('css/jquery-ui.theme.min.css', __FILE__ ), array('jquery-ui'), null );
-    wp_enqueue_style( 'compendium-css' );
-    wp_enqueue_style( 'jquery-ui' );
-    wp_enqueue_style( 'jquery-ui-structure' );
-    wp_enqueue_style( 'jquery-ui-theme' );
 }
 add_action( 'wp_enqueue_scripts', 'compendium_styles' );
+function compendium_admin_styles() {
+    wp_register_style( 'compendium-admin-css', plugins_url('/css/admin-styles.css', __FILE__ ) );
+    wp_enqueue_style( 'compendium-admin-css' );
+}
+add_action( 'admin_enqueue_scripts', 'compendium_admin_styles' );
 
 /**--------------------------------------------------------
  *
@@ -63,11 +68,11 @@ add_action( 'wp_enqueue_scripts', 'compendium_styles' );
  *
  *-------------------------------------------------------*/
 function compendium_activate() {
-    global $compendium_option_list, $compendium_save_as;
+    global $compendium_active_posts, $compendium_save_as;
 
     $init_options = array();
 
-    foreach($compendium_option_list as $option) {
+    foreach($compendium_active_posts as $option) {
         $init_options[$option['db_name']] = $option['init'];
     }
 
@@ -116,24 +121,11 @@ add_filter( 'query_vars', 'add_query_vars_filter' );
  *  Function that outputs when shortcode is called
  *
  *-------------------------------------------------------*/
-function show_compendium_content(){
-    global $compendium_option_list;
+function show_compendium_content($activePosts){
     ob_start();
     echo '<h3>Compendium Resource Center</h3>'.PHP_EOL;
-    global $post; if( !empty($post->post_content) ) : ?>
-        <div class="inner clearfix">
-            <article class="basic-content editor-styles form-styles">
-                <?php
-                    while( have_posts() )
-                    {
-                        the_post();
-                        the_content();
-                    }
-                ?>
-            </article>
-        </div>
-        <?php endif; ?>
-    <?php  Compendium_Resources::do_resoures();
+    echo Compendium_Resources::do_test($activePosts);
+
     return ob_get_clean();
 }
 
@@ -142,18 +134,32 @@ function show_compendium_content(){
  *  Register shortcode to display resource center
  *
  *-------------------------------------------------------*/
-function compendium_resource_center($atts, $content = null) {
+function compendium_resource_center() {
     global $compendium_save_as;
-    $options = shortcode_atts( array(
-        'adminonly' => 'true'
-    ), $atts);
 
-    $compendiumoptions = get_option($compendium_save_as);
+    //Enqueue Scripts
+    wp_enqueue_script( 'compendium-js' );
+    wp_enqueue_script( 'compendium-jquery-ui' );
+    //wp_enqueue_script( 'compendium-page-js' );
 
-    if( is_super_admin() ) {
-        return show_compendium_content($compendiumoptions);
+    //Enqueue Styles
+    wp_enqueue_style( 'compendium-css' );
+    wp_enqueue_style( 'jquery-ui' );
+    wp_enqueue_style( 'jquery-ui-structure' );
+    wp_enqueue_style( 'jquery-ui-theme' );
+
+    //Get active post types
+    $activePosts = array();
+    $compendium_post_types = get_option($compendium_save_as);
+    echo
+    foreach ($compendium_post_types as $post_type){
+        if ($compendium_post_types['active-'.$post_type['description']] === '1') {
+            $activePosts[] = $post_type['description'];
+        }
     }
-    return false;
+
+
+    return show_compendium_content($activePosts);
 }
 add_shortcode('compendium', 'compendium_resource_center');
 
@@ -174,7 +180,7 @@ function compendium_resource_options() {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
     // variables for the field and option names
-    global $compendium_option_list, $compendium_save_as, $post_types;
+    global $compendium_active_posts, $compendium_save_as;
 
 
     $hidden_field_name = 'compendium_submit_hidden';
@@ -189,7 +195,7 @@ function compendium_resource_options() {
     // If they did, this hidden field will be set to 'Y'
     if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ) {
         // Read the values
-        foreach($compendium_option_list as $option) {
+        foreach($compendium_active_posts as $option) {
             if(isset($_POST[$option['db_name']])) {
                 $compendium_options[$option['db_name']] = $_POST[$option['db_name']];
             }
@@ -197,7 +203,17 @@ function compendium_resource_options() {
                 $compendium_options[$option['db_name']] = "0";
             }
         }
+        //Get posts per page value
         $compendium_posts_per_page['value'] = $_POST['posts-per-page'];
+
+        //Get and save category selections
+        foreach ($_POST as $key => $value) {
+            //If post variable name matches the beginning of the radio button names
+            if (strpos($key, 'enable-category') === 0){
+                update_option('compendium-'.$key, $value);
+            }
+
+        }
 
         // Save the values in the database
         update_option($compendium_save_as, $compendium_options);
@@ -215,11 +231,12 @@ function compendium_resource_options() {
         <form name="resource_options" method="post" action="">
             <div class="metabox">
                 <div class="inside">
-                    <h3>Please select the posts types to be displayed in resource center.</h3>
+                    <h3>Enabled Post Types</h3>
+                    <h4>Please select the posts types to be displayed in resource center.</h4>
                     <input type="hidden" name="<?=$hidden_field_name?>" value="Y">
 
                     <?php
-                    foreach($compendium_option_list as $option) {
+                    foreach($compendium_active_posts as $option) {
                         ?>
                         <p>
                             <input name="<?=$option['db_name']?>" type="checkbox" value="1" <?php if ($compendium_options[$option['db_name']] === '1') { echo ' checked="checked"'; } ?> />
@@ -232,6 +249,31 @@ function compendium_resource_options() {
                     ?>
                 </div>
             </div>
+            <?php
+            foreach($compendium_active_posts as $post_type) {
+                $taxonomies = get_object_taxonomies($post_type['description']);
+
+                if ($compendium_options['active-'.$post_type['description']] === '1'){
+                    ?>
+                    <div class="metabox">
+                        <div class="inside">
+                            <h3><?=$post_type['description']?> - Category Taxonomy</h3>
+                            <h4>Please select the taxonomy below that contains the categories for this post type.</h4>
+                            <p>
+                            <?php
+                            foreach($taxonomies as $tax) {
+                                ?>
+                                <input name="enable-category-<?=$post_type['description']?>" type="radio" value="<?=$tax?>" <?php if (get_option('compendium-enable-category-'.$post_type['description']) == $tax ){ echo 'checked';}?> /> <?=$tax?><br>
+                                <?php
+                            }
+                            ?>
+                            </p>
+                        </div>
+                    </div>
+                    <?php
+                }
+            }
+            ?>
             <p>
                 <?=$compendium_posts_per_page['description']?>
                 <input name="posts-per-page" type="number" value="<?=$compendium_posts_per_page['value'] ?>" />

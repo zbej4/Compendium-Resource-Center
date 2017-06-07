@@ -1,11 +1,4 @@
 <?php
-/**
- * Plugin Name: Compendium Resource Center
- * Description: Provides the functionality to create and maintain a resource center that integrates several post types and categories.
- * Version:	 0.1
- * Author: Brandon Jones
- */
-
 class Compendium_Resources
 {
     /**--------------------------------------------------------
@@ -13,7 +6,10 @@ class Compendium_Resources
      *  Create the resources template layers
      *
      *-------------------------------------------------------*/
-    public static function do_resources()
+    public static function do_test($activePosts){
+        return print_r($activePosts);
+    }
+    public static function do_resources($activePosts)
     {
         // Markup
         $layers_open = '<article class="layers">';

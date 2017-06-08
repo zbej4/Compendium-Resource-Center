@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Compendium Resource Center
  * Description: Provides the functionality to create and maintain a resource center that integrates several post types and categories.
- * Version:	 0.1
+ * Version:	 0.7
  * Author: Brandon Jones
 */
 
@@ -44,7 +44,7 @@ function compendium_get_post_types(){
  *-------------------------------------------------------*/
 function compendium_scripts() {
     wp_register_script( 'compendium-js', plugins_url( '/js/scripts.js', __FILE__ ), array( 'jquery' ) );
-    wp_register_script( 'compendium-jquery-ui', plugins_url( 'jquery-ui', 'https://code.jquery.com/ui/1.12.1/jquery-ui.min.js', __FILE__ ), array( 'jquery' ), null, true );
+    wp_register_script( 'compendium-jquery-ui', 'https://code.jquery.com/ui/1.12.1/jquery-ui.min.js',  array( 'jquery' ), null, true );
     wp_register_script( 'compendium-page-js', plugins_url( '/js/page-scripts.js', __FILE__ ), array( 'jquery' ) );
 }
 add_action( 'wp_enqueue_scripts', 'compendium_scripts', 10 );
@@ -77,6 +77,8 @@ function compendium_activate() {
     }
 
     add_option('compendium-posts-per-page', array('description' => 'Posts per page', 'value' => 22));
+    add_option( 'compendium-enable-icons', array('description' => 'Enable Icons', 'value' => 0));
+    add_option( 'compendium-title', array('description' => 'Page Title', 'value' => 'Resource Center'));
     add_option($compendium_save_as, $init_options);
 }
 register_activation_hook( __FILE__, 'compendium_activate' );
@@ -123,8 +125,7 @@ add_filter( 'query_vars', 'add_query_vars_filter' );
  *-------------------------------------------------------*/
 function show_compendium_content($activePosts){
     ob_start();
-    echo '<h3>Compendium Resource Center</h3>'.PHP_EOL;
-    echo Compendium_Resources::do_test($activePosts);
+    echo Compendium_Resources::do_resources($activePosts);
 
     return ob_get_clean();
 }
@@ -140,7 +141,7 @@ function compendium_resource_center() {
     //Enqueue Scripts
     wp_enqueue_script( 'compendium-js' );
     wp_enqueue_script( 'compendium-jquery-ui' );
-    //wp_enqueue_script( 'compendium-page-js' );
+    wp_enqueue_script( 'compendium-page-js' );
 
     //Enqueue Styles
     wp_enqueue_style( 'compendium-css' );
@@ -150,11 +151,14 @@ function compendium_resource_center() {
 
     //Get active post types
     $activePosts = array();
+    $prefix = 'active-';
     $compendium_post_types = get_option($compendium_save_as);
-    echo
-    foreach ($compendium_post_types as $post_type){
-        if ($compendium_post_types['active-'.$post_type['description']] === '1') {
-            $activePosts[] = $post_type['description'];
+    foreach ($compendium_post_types as $post_type => $value){
+        if ($value === '1') {
+            if (substr($post_type, 0, strlen($prefix)) == $prefix) {
+                $post_type = substr($post_type, strlen($prefix));
+            }
+            $activePosts[] = $post_type;
         }
     }
 
@@ -189,7 +193,8 @@ function compendium_resource_options() {
     // Read in existing option value from database
     $compendium_options = get_option($compendium_save_as);
     $compendium_posts_per_page = get_option('compendium-posts-per-page');
-
+    $compendium_enable_icons = get_option('compendium-enable-icons');
+    $compendium_title = get_option('compendium-title');
 
     // See if the user has posted us some information
     // If they did, this hidden field will be set to 'Y'
@@ -206,6 +211,18 @@ function compendium_resource_options() {
         //Get posts per page value
         $compendium_posts_per_page['value'] = $_POST['posts-per-page'];
 
+        //Get icons enabled
+        if(isset($_POST['enable-icons'])){
+            $compendium_enable_icons['value'] = $_POST['enable-icons'];
+        }
+        else {
+            $compendium_enable_icons['value'] = 0;
+        }
+
+        //Get page title
+        $compendium_title['value'] = $_POST['compendium-title'];
+
+
         //Get and save category selections
         foreach ($_POST as $key => $value) {
             //If post variable name matches the beginning of the radio button names
@@ -218,6 +235,8 @@ function compendium_resource_options() {
         // Save the values in the database
         update_option($compendium_save_as, $compendium_options);
         update_option('compendium-posts-per-page', $compendium_posts_per_page);
+        update_option( 'compendium-enable-icons', $compendium_enable_icons);
+        update_option( 'compendium-title', $compendium_title);
 
         // Display a "settings saved" message on the screen
         echo '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
@@ -229,6 +248,25 @@ function compendium_resource_options() {
     <div class="wrap">
         <h2>Compendium Resource Center Settings</h2>
         <form name="resource_options" method="post" action="">
+            <div class="metabox">
+                <div class="inside">
+                    <h3>General Settings</h3>
+                    <p>
+                        <?=$compendium_posts_per_page['description']?>
+                        <input name="posts-per-page" type="number" value="<?=$compendium_posts_per_page['value'] ?>" />
+                    </p>
+
+                    <p>
+                        <?=$compendium_enable_icons['description']?>
+                        <input name="enable-icons" type="checkbox" value="1" <?php if( $compendium_enable_icons['value'] === '1'){ echo ' checked="checked"'; } ?> />
+                    </p>
+
+                    <p>
+                        <?=$compendium_title['description']?>
+                        <input name="compendium-title" type="text" value="<?=$compendium_title['value'] ?>" />
+                    </p>
+                </div>
+            </div>
             <div class="metabox">
                 <div class="inside">
                     <h3>Enabled Post Types</h3>
@@ -274,10 +312,6 @@ function compendium_resource_options() {
                 }
             }
             ?>
-            <p>
-                <?=$compendium_posts_per_page['description']?>
-                <input name="posts-per-page" type="number" value="<?=$compendium_posts_per_page['value'] ?>" />
-            </p>
 
             <p class="submit">
                 <input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Save Changes') ?>" />

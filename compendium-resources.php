@@ -6,8 +6,8 @@ class Compendium_Resources
      *  Create the resources template layers
      *
      *-------------------------------------------------------*/
-    public static function do_test($activePosts){
-        return print_r($activePosts);
+    public static function do_test($var){
+        return print_r($var);
     }
     public static function do_resources($activePosts)
     {
@@ -15,40 +15,68 @@ class Compendium_Resources
         $layers_open = '<article class="layers">';
         $layers_close = '</article>';
 
-        // Get categories selected
-        $categories = get_field('resources_categories');
-        $blog_categories = get_field('blog_categories');
+        // Get categories of active post types
+        $taxonomies = array();
+        foreach($activePosts as $post_type){
+            $taxonomy_name = get_option('compendium-enable-category-'.$post_type);
+            $taxonomies[] = get_terms( array(
+                'taxonomy'      => $taxonomy_name,
+                'hide_empty'    => true,
+            ));
+        }
+        /**  $taxonomies here is a multilevel array structured as such
+         *      Array( [0] - this would be a taxonomy => array(
+         *                [0] - this would be a category => WP_Term Object(
+         *                      [term_id]   => 7,
+         *                      [name]      => 'Name of Category',
+         *                      [slug]      => 'name-of-category',
+         *                      [term_group]=> 0,
+         *                      [term_taxonomy_id]  => 7,
+         *                      [taxonomy]          => 'category', - This is the taxonomy the term is from
+         *                      [description]       => 'description of category',
+         *                      [parent]            => 0,
+         *                      [count]             => 1,
+         *                      [filter]            => raw
+         *                  ), - end of WP_Term Object
+         *              ), - end of taxonomy
+         *      );
+         */
 
-        // Get document types
-        $document_types = get_terms('document-types', array('hide_empty'=>false));
+        // Get document types as an array of the post type slugs
+        $document_types = $activePosts;
+        // Get page title
+        $page_title = get_option('compendium-title')['value'];
 
         // Make sure they're not empty
-        if( empty($categories) || empty($blog_categories) )
+        if( empty($taxonomies) || empty($document_types) )
             return;
 
-        $clear_btn = '<a href="'. site_url( "/knowledge-center/" ) . '" title="Reset" class="clear_form_link">Reset</a>';
+        //Build Default URL
+        $url = $_SERVER['HTTP_HOST'].strtok($_SERVER['REQUEST_URI'],'?');
+
+        $clear_btn = '<a href="//'. $url . '" title="Reset" class="clear_form_link">Reset</a>';
         $search_icon = '<a href="#" title="Search" class="search_form_link"><i class="fa fa-search"></i></a>';
-        $resource_head = '<div class="inner clearfix"><div class="resource_head_bar"><h2 class="resource_head">Latest Resources</h2>';
-        $filter_form_open = '<div class="resource_bar_nav"><form action="'. site_url('/knowledge-center/') .'" method="get" class="filter-form" id="filter">';
+        $resource_head = '<div class="inner clearfix"><div class="resource_head_bar"><h2 class="resource_head">'.$page_title.'</h2>';
+        $filter_form_open = '<div class="resource_bar_nav"><form action="//'. $url .'" method="get" class="filter-form" id="filter">';
         $filter_form_close = '<button>Apply</button>'. $clear_btn .$search_icon;
         $topic_menu_open = '<select id="topic-menu" name="topic-filter"><option>Browse by Topic</option>';
         $topic_menu_close = '</select>';
         $type_menu_open = '<select id="type-menu" name="type-filter"><option>Browse by Type</option>';
         $type_menu_close = '</select>';
         $search_form = '<div class="resource_bar_search">
-												<div class="resource-search">
-													<input type="submit" class="resource-search-btn" value="">
-													<input type="text" value="" name="k_search" class="resource-input" placeholder="Search">
-													<a href="#" class="search_form_close"><i class="fa fa-close"></i></a>
-												</div>
-											</div>';
+                            <div class="resource-search">
+                                <input type="submit" class="resource-search-btn" value="">
+                                <input type="text" value="" name="k_search" class="resource-input" placeholder="Search">
+                                <a href="#" class="search_form_close"><i class="fa fa-close"></i></a>
+                            </div>
+                        </div>';
 
         // Get the category names as an array of ids and names
         $terms = array();
-        foreach( $categories as $category )
-            $terms[$category] = get_term($category, 'document-category')->name;
-        foreach( $blog_categories as $category)
-            $terms[$category] = get_term($category, 'category')->name;
+        foreach( $taxonomies as $taxonomy){
+            foreach( $taxonomy as $category )
+                $terms[$category->term_id] = $category->name;
+        }
 
         //Combine Categories from post types and create menu options
         $terms = array_unique($terms);
@@ -64,29 +92,31 @@ class Compendium_Resources
             echo'<option value="' . sanitize_title_with_dashes($value) .'">'. $value .'</option>';
         }
         echo $topic_menu_close . $type_menu_open;
-        echo '<option value="blog-posts">Blog Posts</option>';
         foreach ($document_types as $doctype){
-            echo'<option value="' . sanitize_title_with_dashes($doctype->name) .'">'. $doctype->name .'</option>';
+            $docobj = get_post_type_object($doctype);
+            echo'<option value="' . sanitize_title_with_dashes($doctype) .'">'. $docobj->label .'</option>';
         }
-        echo $type_menu_close . $filter_form_close . $search_form . '</div></form></div>';
+        echo $type_menu_close . $filter_form_close . $search_form . '</div></form></div></div>';
 
         echo $layers_open;
 
+
         // The posts
         $args = array(
-            'post_type' => array('document', 'post' ),
+            'post_type' => $document_types,
             'post_status' => 'publish',
-            'posts_per_page' => 22,
-            'category_name' => implode(',', $cat_array),
+            'posts_per_page' => get_option('compendium-posts-per-page')['value'],
             'tax_query' => array(
-                'relation' => 'OR',
-                array(
-                    'taxonomy' => 'document-category',
-                    'field' => 'slug',
-                    'terms' => $cat_array
-                )
+                'relation' => 'OR'
             )
         );
+        foreach ($document_types as $doctype){
+            $args['tax_query'][] = array(
+                'taxonomy'  => get_option('compendium-enable-category-'.$doctype),
+                'field'     => 'slug',
+                'terms'     => $cat_array
+            );
+        }
 
         if (get_query_var('topic-filter')||get_query_var('type-filter')||get_query_var('k_search'))
         {
@@ -95,11 +125,6 @@ class Compendium_Resources
             $search_terms = get_query_var('k_search');
             $args = static::knowledge_filter_function($args, $topic, $type, $search_terms);
         }
-        /*if (get_query_var('k_search')){
-            $search_terms = get_query_var('k_search');
-            $args = static::knowledge_search_function($args, $search_terms);
-
-        }*/
 
         Compendium_Resources::populate_resources($args);
 
@@ -116,8 +141,6 @@ class Compendium_Resources
         //Store original query Arguments
         $args = $query_args;
 
-        $do_not_duplicate = '';
-
         //Markup
         $layer_open = '<section class="layer layer--resources editor-styles form-styles"><div class="inner clearfix">';
         $layer_close = '</div></section>';
@@ -133,126 +156,26 @@ class Compendium_Resources
         $icon_open = '<div class="resource__icon">';
         $icon_close = '</div>';
 
-        $category_open = '<p class="resource__category">';
-        $category_close = '</p>';
+        $doctype_open = '<p class="resource__doctype">';
+        $doctype_close = '</p>';
 
         $link_open = '<a class="resource__link" href="%LINK%">';
         $link_close = '</a>';
 
-        $featured_icon = '<div class="resource__icon-featured"><i class="fa fa-star"></i></div>';
 
         // Do icons?
-        $icons = get_field('resources_icons', 6330);
+        $icons = get_option('compendium-enable-icons');
 
         $output = '';
 
         $output .= $layer_open;
 
-        if ( !is_paged() ){
-            $featured_args = $query_args;
-
-            $featured_args['posts_per_page'] = 12;
-            $featured_args['meta_query'] = array(
-                'relation' => 'AND',
-                'featured' => array(
-                    'key' => 'featured-meta-checkbox',
-                    'value' => 'yes'
-                ),
-                'feat-order' => array(
-                    'key' => 'featured-meta-order',
-                    'type' => 'NUMERIC'
-                )
-            );
-            $featured_args['orderby'] = array('feat-order' => 'ASC');
-            /*$featured_args['meta_key'] = 'featured-meta-checkbox';
-            $featured_args['meta_value'] = 'yes';*/
-
-            //Featured posts query
-            $documents = new WP_Query($featured_args);
-
-            // Make sure we have posts and format them
-            if( !is_wp_error($documents) && $documents->have_posts() )
-            {
-                $featured_exists = true;
-                foreach( $documents->posts as $document )
-                {
-                    $item_open = '<div class="resource featured-resource %TYPE%">';
-
-                    //Store id to not duplicate post
-                    $do_not_duplicate[] = $document->ID;
-
-                    $id = $document->ID;
-
-                    // Title
-                    //Check if has external link
-                    $external_link = get_field('document_external_url', $id) ?: '';
-                    $final_link = empty($external_link) ? get_permalink($id) : $external_link;
-                    $title = get_the_title($id);
-                    $title = (strlen($title) > 60) ? trim(substr($title, 0, 60))."..." : $title;
-                    $title = str_replace('%LINK%', $final_link, $link_open) . $title . $link_close;
-
-                    //Info LINK
-                    $infobar_open_link = str_replace('%LINK%', $final_link, $infobar_open);
-
-                    // Category
-                    $terms = get_the_terms($id, 'document-types');
-                    $category = empty($terms) ? '' : $terms[0]->name;
-                    //$category = get_field('document_category', $id) ?: $category; // Override if set
-                    $category = !empty($category) ? $category_open . $category . $category_close : '';
-                    if($document->post_type == 'post')
-                    {
-                        $category = $category_open . 'Blog Post' . $category_close;
-                    }
-
-                    // Icon for Category
-                    $icon = '';
-                    if($icons)
-                    {
-                        if($document->post_type == 'post')
-                        {
-                            $icon = $icon_open . Calero::get_icon('rss') . $icon_close;
-                        }
-                        else{
-                            $icon = $icon_open . Calero::get_icon($terms[0]->slug) . $icon_close;
-                        }
-                    }
-
-                    //Add class for category
-                    if($document->post_type == 'post')
-                        $item_open = str_replace( '%TYPE%', 'blog-post', $item_open);
-                    else
-                        $item_open = str_replace( '%TYPE%', $terms[0]->slug, $item_open);
-
-                    // Social sharing
-                    // Share
-                    $share = '<a class="resource_social addthis_button_compact" addthis:url="' . get_permalink($document->ID) . '" addthis:title="' . get_the_title($document->ID)	. '"><span>Share</span></a>';
-
-                    // Image
-                    $image = get_field('document_thumb_image', $id) ?: '';
-                    $image = empty($image) ? '' : $image_open . '<img src="' . $image['url'] . '" alt="' . $image['alt'] . '">' . $share . $image_close;
-                    if($document->post_type == 'post')
-                    {
-                        $image = $image_open . get_the_post_thumbnail($id, 'medium') . $share . $image_close;
-                    }
-
-                    $output .= $item_open . $featured_icon . $image . $title . $infobar_open_link . $icon  . $category . $infobar_close . $item_close;
-                }
-
-                wp_reset_postdata();
-            }
-        }
-
-        //Remaining posts query
-        $args['post__not_in']=$do_not_duplicate;
-        $args['paged'] = get_query_var( 'paged' );
-        if (!is_paged()) {
-            $args['posts_per_page']= $args['posts_per_page'] - count($do_not_duplicate);
-        }
+        //$args['paged'] = get_query_var( 'paged' );
 
         $documents = new WP_Query($args);
 
         //Pagination
-        $pagination = Em_Blog::display_pagination($documents);
+        $pagination = static::display_pagination($documents);
 
         // Make sure we have posts and format them
         if( !is_wp_error($documents) && $documents->have_posts() )
@@ -264,8 +187,10 @@ class Compendium_Resources
 
                 // Title
                 //Check if has external link
-                $external_link = get_field('document_external_url', $id) ?: '';
-                $final_link = empty($external_link) ? get_permalink($id) : $external_link;
+                //$external_link = get_field('document_external_url', $id) ?: '';
+                //$final_link = empty($external_link) ? get_permalink($id) : $external_link;
+
+                $final_link = get_permalink($id);
                 $title = get_the_title($id);
                 $title = (strlen($title) > 60) ? trim(substr($title, 0, 60))."..." : $title;
                 $title = str_replace('%LINK%', $final_link, $link_open) . $title . $link_close;
@@ -273,14 +198,12 @@ class Compendium_Resources
                 //Info LINK
                 $infobar_open_link = str_replace('%LINK%', $final_link, $infobar_open);
 
-                // Category
-                $terms = get_the_terms($id, 'document-types');
-                $category = empty($terms) ? '' : $terms[0]->name;
-                //$category = get_field('document_category', $id) ?: $category; // Override if set
-                $category = !empty($category) ? $category_open . $category . $category_close : '';
+                // Document Type
+                $docobj = get_post_type_object($document->post_type);
+                $doctype = $doctype_open . $docobj->label . $doctype_close;
                 if($document->post_type == 'post')
                 {
-                    $category = $category_open . 'Blog Post' . $category_close;
+                    $doctype = $doctype_open . 'Blog Post' . $doctype_close;
                 }
 
                 // Icon for Category
@@ -289,10 +212,10 @@ class Compendium_Resources
                 {
                     if($document->post_type == 'post')
                     {
-                        $icon = $icon_open . Calero::get_icon('rss') . $icon_close;
+                        $icon = $icon_open . Compendium_Resources::get_icon('rss') . $icon_close;
                     }
                     else{
-                        $icon = $icon_open . Calero::get_icon($terms[0]->slug) . $icon_close;
+                        $icon = $icon_open . Compendium_Resources::get_icon($document->post_type) . $icon_close;
                     }
                 }
 
@@ -300,7 +223,7 @@ class Compendium_Resources
                 if($document->post_type == 'post')
                     $item_open = str_replace( '%TYPE%', 'blog-post', $item_open);
                 else
-                    $item_open = str_replace( '%TYPE%', $terms[0]->slug, $item_open);
+                    $item_open = str_replace( '%TYPE%', $document->post_type, $item_open);
 
 
                 // Social sharing
@@ -308,14 +231,10 @@ class Compendium_Resources
                 $share = '<a class="resource_social addthis_button_compact" addthis:url="' . get_permalink($document->ID) . '" addthis:title="' . get_the_title($document->ID)	. '"><span>Share</span></a>';
 
                 // Image
-                $image = get_field('document_thumb_image', $id) ?: '';
+                $image = the_post_thumbnail();
                 $image = empty($image) ? '' : $image_open . '<img src="' . $image['url'] . '" alt="' . $image['alt'] . '">' . $share . $image_close;
-                if($document->post_type == 'post')
-                {
-                    $image = $image_open . get_the_post_thumbnail($id, 'post-thumbnail') . $share . $image_close;
-                }
 
-                $output .= $item_open . $image . $title . $infobar_open_link . $icon . $category . $infobar_close . $item_close;
+                $output .= $item_open . $image . $title . $infobar_open_link . $icon . $doctype . $infobar_close . $item_close;
 
             }
 
@@ -323,7 +242,7 @@ class Compendium_Resources
 
             wp_reset_postdata();
         }
-        else if (!$documents->have_posts() && !$featured_exists) {
+        else if (!$documents->have_posts()) {
             $output = $layer_open . '<h2 style="text-align:center;">No posts found</h2>' . $layer_close;
         }
         echo $output;
@@ -335,45 +254,60 @@ class Compendium_Resources
      *
      *-------------------------------------------------------*/
     public static function knowledge_filter_function($pass_args = null, $topic_filter = null, $type_filter = null, $k_search = null){
+        global $compendium_save_as;
         $args = $pass_args;
 
-        //for categories
-        //If topic isn't set, set all topics in args
-        if($topic_filter != 'Browse by Topic')
+        //Get active post types
+        $activePosts = array();
+        $prefix = 'active-';
+        $compendium_post_types = get_option($compendium_save_as);
+        foreach ($compendium_post_types as $post_type => $value){
+            if ($value === '1') {
+                if (substr($post_type, 0, strlen($prefix)) == $prefix) {
+                    $post_type = substr($post_type, strlen($prefix));
+                }
+                $activePosts[] = $post_type;
+            }
+        }
+
+        //If both are set relationship should be and
+        if($topic_filter != 'Browse by Topic' && $type_filter != 'Browse by Type')
         {
-            $args['category_name'] = $topic_filter;
             $args['tax_query'] = array(
-                'relation' => 'OR',
+                'relation' => 'AND',
                 array(
-                    'taxonomy' => 'document-category',
+                    'taxonomy' => get_option('compendium-enable-category-'.$type_filter),
                     'field' => 'slug',
                     'terms' => $topic_filter
                 )
             );
-        }
 
+        }
+        //for categories
+        //If topic isn't set, set all topics in args
+        elseif ($topic_filter != 'Browse by Topic')
+        {
+            $args['tax_query'] = array(
+                'relation' => 'OR'
+            );
+            foreach ($activePosts as $doctype){
+                $args['tax_query'][] = array(
+                    'taxonomy'  => get_option('compendium-enable-category-'.$doctype),
+                    'field'     => 'slug',
+                    'terms'     => $topic_filter
+                );
+            }
+        }
         //for document type
         //If type isn't set, set both post_types in args
-        if($type_filter != 'Browse by Type')
+        elseif ($type_filter != 'Browse by Type')
         {
-            //if type is blog posts
-            if ($type_filter == 'blog-posts') {
-                $args['post-type'] = 'post';
-                $args['tax_query'] = '';
-            }
-            //type is a document-type
-            else {
-                $args['category_name'] = '';
-                $args['post_type'] = 'document';
-                $args['tax_query']['relation'] = 'AND';
-                $args['tax_query'][] =
-                    array(
-                        'taxonomy' => 'document-types',
-                        'field' => 'slug',
-                        'terms' => $type_filter
-                    );
-            }
+            $args['post_type'] = $type_filter;
         }
+        else{
+            /* Do Nothing */
+        }
+
 
         //Get search terms
         if($k_search != null){
@@ -381,6 +315,57 @@ class Compendium_Resources
         }
 
         return $args;
+    }
+
+    /**--------------------------------------------------------
+     *
+     *  Return pagination
+     *
+     *-------------------------------------------------------*/
+    public static function display_pagination( $query = null )
+    {
+        // Set the defaults
+        $args = array(
+            'prev' => '<span class="pager prev">Previous</span>',
+            'next' => '<span class="pager next">Next</span>',
+            'query' => null,
+            'first_last' => true,
+            'current' => null,
+        );
+
+        // If we've not passed a query object, use the global one.
+        if( is_null($query) )
+        {
+            global $wp_query;
+            $query = $wp_query;
+        }
+
+        // If we have multiple pages of posts
+        if( $query->max_num_pages > 1 )
+        {
+            $current = ( is_null($args['current']) ) ? max(1, get_query_var('paged')) : $args['current'];
+
+            $output =  paginate_links(array(
+                'base' => preg_replace('/\?.*/', '', get_pagenum_link(1)) . '%_%',
+                'format' => 'page/%#%/',
+                'current' => $current,
+                'total' => $query->max_num_pages,
+                'prev_text' => $args['prev'],
+                'next_text' => $args['next'],
+            ));
+
+            // Print first and last page links if not on the first or last page
+            if( $args['first_last'] )
+            {
+                if( $current != 1 )
+                    $output = '<a class="page-numbers pager first" href="' . get_pagenum_link(1) . '">First</a>' . $output;
+
+                if( $current != $query->max_num_pages )
+                    $output .= '<a class="page-numbers pager last" href="' . get_pagenum_link($query->max_num_pages) . '">Last</a>';
+            }
+
+            return '<div class="pagination">' . $output . '</div>'	;
+        }
     }
 
     /**--------------------------------------------------------

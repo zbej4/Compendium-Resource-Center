@@ -23,3 +23,27 @@
     margin:0;
     padding:0 20px;
 }
+input[name="compendium-title"] {
+    width:300px;
+}
+
+svg {
+    position: relative;
+    top: 50%;
+    width: 80%;
+    -moz-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+.resource__icon {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    width: 2.5rem;
+    height: 2.5rem;
+}
+.resource__icon .line {
+    stroke:#4c4c4c;
+    stroke-width:3;
+}

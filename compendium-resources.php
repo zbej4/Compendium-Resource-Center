@@ -13,7 +13,7 @@ class Compendium_Resources
     {
         // Markup
         $layers_open = '<article class="layers">';
-        $layers_close = '</article>';
+        $layers_close = '</article></div>';
 
         // Get categories of active post types
         $taxonomies = array();
@@ -56,7 +56,7 @@ class Compendium_Resources
 
         $clear_btn = '<a href="//'. $url . '" title="Reset" class="clear_form_link">Reset</a>';
         $search_icon = '<a href="#" title="Search" class="search_form_link"><i class="fa fa-search"></i></a>';
-        $resource_head = '<div class="inner clearfix"><div class="resource_head_bar"><h2 class="resource_head">'.$page_title.'</h2>';
+        $resource_head = '<div id="compendium"><div class="inner clearfix"><div class="resource_head_bar"><h2 class="resource_head">'.$page_title.'</h2>';
         $filter_form_open = '<div class="resource_bar_nav"><form action="//'. $url .'" method="get" class="filter-form" id="filter">';
         $filter_form_close = '<button>Apply</button>'. $clear_btn .$search_icon;
         $topic_menu_open = '<select id="topic-menu" name="topic-filter"><option>Browse by Topic</option>';
@@ -232,7 +232,7 @@ class Compendium_Resources
 
                 // Image
                 $image = the_post_thumbnail();
-                $image = empty($image) ? '' : $image_open . '<img src="' . $image['url'] . '" alt="' . $image['alt'] . '">' . $share . $image_close;
+                $image = empty($image) ? $image_open . '<img src="' . plugins_url( 'css/images/placeholder.jpg', __FILE__ ) . '" alt="' . $image['alt'] . '">' . $share . $image_close : $image_open . '<img src="' . $image['url'] . '" alt="' . $image['alt'] . '">' . $share . $image_close;
 
                 $output .= $item_open . $image . $title . $infobar_open_link . $icon . $doctype . $infobar_close . $item_close;
 

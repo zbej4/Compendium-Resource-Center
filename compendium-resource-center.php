@@ -63,12 +63,18 @@ function compendium_resource_center_register_required_plugins(){
      * If the source is NOT from the .org repo, then source is also required.
      */
     $plugins = array(
-      array(
+        array(
           'name' => 'Share Buttons by AddThis',
           'slug' => 'addthis',
           'required' => false,
           'is_callable' => 'addthis_script_to_content',
-      )
+        ),
+        array(
+          'name' => 'Advanced Custom Fields',
+            'slug' => 'advanced-custom-fields',
+            'required' => true,
+            'is_callable' => 'acf',
+        )
     );
     /**
      * Array of configuration settings. Amend each line as needed.

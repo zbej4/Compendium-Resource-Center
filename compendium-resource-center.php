@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Compendium Resource Center
  * Description: Provides the functionality to create and maintain a resource center that integrates several post types and categories.
- * Version:	 0.4
+ * Version:	 0.4.2
  * Author: Brandon Jones
  * Text Domain: compendium-resource-center
 */
@@ -19,7 +19,7 @@ global $compendium_save_as; // the `option_name` field in the `wp_options` table
 global $compendium_active_posts;
 $compendium_save_as = 'compendiumresourcecenter';
 
-$post_types = get_post_types();
+$post_types = get_post_types(['public' => true]);
 
 //This is needed to initialize the array.  When the admin launches it will run again after the plugins have loaded to ensure all post types are available.
 foreach ($post_types as $type) {
@@ -34,7 +34,7 @@ foreach ($post_types as $type) {
 add_action( 'wp_loaded', 'compendium_get_post_types');
 function compendium_get_post_types(){
     global $compendium_active_posts;
-    $post_types = get_post_types();
+    $post_types = get_post_types(['public' => true]);
     //reset active posts to prevent duplicates of those that have already initialized
     $compendium_active_posts = array();
 

@@ -26,7 +26,15 @@
 input[name="compendium-title"] {
     width:300px;
 }
-
+.svg-list {
+    width:100%;
+}
+.svg-list tr td:first-child {
+    width:30%;
+}
+.svg-list tr:nth-child(even) {
+    background:#ddd;
+}
 svg {
     position: relative;
     top: 50%;

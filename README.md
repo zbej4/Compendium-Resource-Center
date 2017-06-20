@@ -17,24 +17,27 @@ Finally, add the shortcode [compendium] to the page that you would like the reso
 
 ###Change log
 
-#####Version 0.2
-* Fixes options issue and adds base of functions for population.
+#####Version 0.5.2
+* Added several new icons for post types
 
-#####Version 0.3
-* This update finalizes the output of the plugin and adds the page title and icons options. There still exists a bug with the jQuery UI select menu, and no css styles have been applied to the front end.
-
-#####Version 0.3.1
-* jQuery UI bug removed.  Dropdown menus fully functional.
-
-#####Version 0.4
-* Added social sharing button and menu to resource tiles.
-
-#####Version 0.4.2
-* Changed to only allow for public post types in resource center.
+#####Version 0.5.1
+* Minor bugfix for external url field
 
 #####Version 0.5
 * Added external url option
 * Available Icon list styles changed for easier viewing. 
 
-#####Version 0.5.1
-* Minor bugfix for external url field
+#####Version 0.4.2
+* Changed to only allow for public post types in resource center.
+
+#####Version 0.4
+* Added social sharing button and menu to resource tiles.
+
+#####Version 0.3.1
+* jQuery UI bug removed.  Dropdown menus fully functional.
+
+#####Version 0.3
+* This update finalizes the output of the plugin and adds the page title and icons options. There still exists a bug with the jQuery UI select menu, and no css styles have been applied to the front end.
+
+#####Version 0.2
+* Fixes options issue and adds base of functions for population.

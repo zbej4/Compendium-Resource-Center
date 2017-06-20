@@ -170,8 +170,6 @@ class Compendium_Resources
 
         $output .= $layer_open;
 
-        //$args['paged'] = get_query_var( 'paged' );
-
         $documents = new WP_Query($args);
 
         //Pagination
@@ -187,10 +185,8 @@ class Compendium_Resources
 
                 // Title
                 //Check if has external link
-                //$external_link = get_field('document_external_url', $id) ?: '';
-                //$final_link = empty($external_link) ? get_permalink($id) : $external_link;
-
-                $final_link = get_permalink($id);
+                $external_link = get_field('compendium_external_url', $id) ?: '';
+                $final_link = empty($external_link) ? get_permalink($id) : $external_link;
                 $title = get_the_title($id);
                 $title = (strlen($title) > 60) ? trim(substr($title, 0, 60))."..." : $title;
                 $title = str_replace('%LINK%', $final_link, $link_open) . $title . $link_close;
@@ -219,7 +215,7 @@ class Compendium_Resources
                     }
                 }
 
-                //Add class for category
+                //Add class for post type
                 if($document->post_type == 'post')
                     $item_open = str_replace( '%TYPE%', 'blog-post', $item_open);
                 else

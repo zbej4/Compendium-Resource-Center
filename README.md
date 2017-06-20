@@ -16,6 +16,7 @@ Finally, add the shortcode [compendium] to the page that you would like the reso
 - Ability to create common post types within plugin.
 
 ###Change log
+
 #####Version 0.2
 * Fixes options issue and adds base of functions for population.
 
@@ -34,3 +35,6 @@ Finally, add the shortcode [compendium] to the page that you would like the reso
 #####Version 0.5
 * Added external url option
 * Available Icon list styles changed for easier viewing. 
+
+#####Version 0.5.1
+* Minor bugfix for external url field

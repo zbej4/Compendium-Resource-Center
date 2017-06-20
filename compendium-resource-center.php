@@ -5,7 +5,7 @@
  * Version:	 0.4.2
  * Author: Brandon Jones
  * Text Domain: compendium-resource-center
-*/
+ */
 
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 require_once dirname( __FILE__ ) .'/compendium-resources.php';
@@ -80,13 +80,13 @@ function compendium_resource_center_register_required_plugins(){
      */
     $plugins = array(
         array(
-          'name' => 'Share Buttons by AddThis',
-          'slug' => 'addthis',
-          'required' => false,
-          'is_callable' => 'addthis_script_to_content',
+            'name' => 'Share Buttons by AddThis',
+            'slug' => 'addthis',
+            'required' => false,
+            'is_callable' => 'addthis_script_to_content',
         ),
         array(
-          'name' => 'Advanced Custom Fields',
+            'name' => 'Advanced Custom Fields',
             'slug' => 'advanced-custom-fields',
             'required' => true,
             'is_callable' => 'acf',
@@ -273,11 +273,11 @@ function compendium_register_external_url() {
     $location_array = array();
     foreach ($activeExternal as $post_type) {
         $location_array[] = array (
-                array(
-                        'param' => 'post_type',
-                        'operator' => '==',
-                        'value' => $post_type,
-                ),
+            array(
+                'param' => 'post_type',
+                'operator' => '==',
+                'value' => $post_type,
+            ),
         );
     }
 
@@ -473,13 +473,13 @@ function compendium_resource_options() {
                             <h3><?=$post_type['description']?> - Category Taxonomy</h3>
                             <h4>Please select the taxonomy below that contains the categories for this post type.</h4>
                             <p>
-                            <?php
-                            foreach($taxonomies as $tax) {
-                                ?>
-                                <input name="enable-category-<?=$post_type['description']?>" type="radio" value="<?=$tax?>" <?php if (get_option('compendium-enable-category-'.$post_type['description']) == $tax ){ echo 'checked';}?> /> <?=$tax?><br>
                                 <?php
-                            }
-                            ?>
+                                foreach($taxonomies as $tax) {
+                                    ?>
+                                    <input name="enable-category-<?=$post_type['description']?>" type="radio" value="<?=$tax?>" <?php if (get_option('compendium-enable-category-'.$post_type['description']) == $tax ){ echo 'checked';}?> /> <?=$tax?><br>
+                                    <?php
+                                }
+                                ?>
                             </p>
                         </div>
                     </div>

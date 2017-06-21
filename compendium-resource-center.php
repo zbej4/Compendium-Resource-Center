@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Compendium Resource Center
  * Description: Provides the functionality to create and maintain a resource center that integrates several post types and categories.
- * Version:	 0.5.2
+ * Version:	 0.6
  * Author: Brandon Jones
  * Text Domain: compendium-resource-center
  */
@@ -17,7 +17,7 @@ require_once dirname( __FILE__ ) .'/compendium-resources.php';
  *-------------------------------------------------------*/
 global $compendium_save_as; // the `option_name` field in the `wp_options` table
 global $compendium_active_posts;
-global $compendium_active_external;
+
 $compendium_save_as = 'compendiumresourcecenter';
 
 $post_types = get_post_types(['public' => true]);
@@ -30,35 +30,19 @@ foreach ($post_types as $type) {
         'init'          => '0'
     );
 }
-foreach($post_types as $type) {
-    $compendium_active_external[] = array(
-        'description'   => $type,
-        'db_name'       => 'external-'.$type,
-        'init'          => '0'
-    );
-}
 
 //Get Post types after load
 add_action( 'wp_loaded', 'compendium_get_post_types');
 function compendium_get_post_types(){
-    global $compendium_active_posts, $compendium_active_external;
+    global $compendium_active_posts;
     $post_types = get_post_types(['public' => true]);
     //reset active posts to prevent duplicates of those that have already initialized
     $compendium_active_posts = array();
-    $compendium_active_external = array();
 
     foreach ($post_types as $type) {
         $compendium_active_posts[] = array(
             'description'   => $type,
             'db_name'       => 'active-'.$type,
-            'init'          => '0'
-        );
-    }
-
-    foreach ($post_types as $type) {
-        $compendium_active_external[] = array(
-            'description'   => $type,
-            'db_name'       => 'external-'.$type,
             'init'          => '0'
         );
     }
@@ -143,24 +127,21 @@ add_action( 'admin_enqueue_scripts', 'compendium_admin_styles' );
  *
  *-------------------------------------------------------*/
 function compendium_activate() {
-    global $compendium_active_posts, $compendium_save_as, $compendium_active_external;
+    global $compendium_active_posts, $compendium_save_as;
 
     $init_options = array();
-    $init_external = array();
 
     //Initialize active post types
     foreach($compendium_active_posts as $option) {
         $init_options[$option['db_name']] = $option['init'];
     }
-    //Initialize external url fields
-    foreach($compendium_active_external as $external) {
-        $init_external[$external['db_name']] = $external['init'];
-    }
+
 
     add_option('compendium-posts-per-page', array('description' => 'Posts per page', 'value' => 22));
     add_option( 'compendium-enable-icons', array('description' => 'Enable Icons', 'value' => 0));
+    add_option( 'compendium-enable-featured-posts', array('description' => 'Enable Featured posts', 'value' => 0));
+    add_option( 'compendium-featured-per-page', array('description' => 'Featured posts per page', 'value' => 12));
     add_option( 'compendium-title', array('description' => 'Page Title', 'value' => 'Resource Center'));
-    add_option( 'compendium-external-url', $init_external);
     add_option($compendium_save_as, $init_options);
 }
 register_activation_hook( __FILE__, 'compendium_activate' );
@@ -255,23 +236,23 @@ add_shortcode('compendium', 'compendium_resource_center');
  *  Register External URL fields
  *
  *-------------------------------------------------------*/
-function compendium_register_external_url() {
-    //Get selected post types for external field
-    $compendium_external_url = get_option('compendium-external-url');
-    //Convert to array of post types
-    $activeExternal = array();
-    $prefix = 'external-';
-    foreach ($compendium_external_url as $post_type => $value){
+function compendium_register_meta_fields() {
+    global $compendium_save_as;
+    //Get active post types as array
+    $activePosts = array();
+    $prefix = 'active-';
+    $compendium_post_types = get_option($compendium_save_as);
+    foreach ($compendium_post_types as $post_type => $value){
         if ($value === '1') {
             if (substr($post_type, 0, strlen($prefix)) == $prefix) {
                 $post_type = substr($post_type, strlen($prefix));
             }
-            $activeExternal[] = $post_type;
+            $activePosts[] = $post_type;
         }
     }
-
+    //Convert to array for locations
     $location_array = array();
-    foreach ($activeExternal as $post_type) {
+    foreach ($activePosts as $post_type) {
         $location_array[] = array (
             array(
                 'param' => 'post_type',
@@ -309,6 +290,15 @@ function compendium_register_external_url() {
                         'max_size' => 0,
                         'mime_types' => '',
                     ),
+                    array (
+                        'key' => 'field_59495a80c7297',
+                        'label' => 'Featured Post',
+                        'name' => 'compendium_featured_post',
+                        'type' => 'true_false',
+                        'instructions' => 'Make this a featured post in the resource center.',
+                        'message' => '',
+                        'default_value' => 0,
+                    ),
                 ),
                 'location' => $location_array,
                 'options' => array (
@@ -328,7 +318,7 @@ function compendium_register_external_url() {
 
 
 }
-add_action('wp_loaded', 'compendium_register_external_url');
+add_action('wp_loaded', 'compendium_register_meta_fields');
 
 
 /**--------------------------------------------------------
@@ -347,7 +337,7 @@ function compendium_resource_options() {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
     // variables for the field and option names
-    global $compendium_active_posts, $compendium_save_as, $compendium_active_external;
+    global $compendium_active_posts, $compendium_save_as;
 
 
     $hidden_field_name = 'compendium_submit_hidden';
@@ -355,8 +345,9 @@ function compendium_resource_options() {
 
     // Read in existing option value from database
     $compendium_options = get_option($compendium_save_as);
-    $compendium_external_url = get_option('compendium-external-url');
     $compendium_posts_per_page = get_option('compendium-posts-per-page');
+    $compendium_enable_featured = get_option('compendium-enable-featured-posts');
+    $compendium_featured_per_page = get_option('compendium-featured-per-page');
     $compendium_enable_icons = get_option('compendium-enable-icons');
     $compendium_title = get_option('compendium-title');
 
@@ -372,15 +363,6 @@ function compendium_resource_options() {
                 $compendium_options[$option['db_name']] = "0";
             }
         }
-        //Get external url post types
-        foreach($compendium_active_external as $external) {
-            if(isset($_POST[$external['db_name']])) {
-                $compendium_external_url[$external['db_name']] = $_POST[$external['db_name']];
-            }
-            else {
-                $compendium_external_url[$external['db_name']] = "0";
-            }
-        }
         //Get posts per page value
         $compendium_posts_per_page['value'] = $_POST['posts-per-page'];
 
@@ -391,6 +373,17 @@ function compendium_resource_options() {
         else {
             $compendium_enable_icons['value'] = 0;
         }
+
+        //Get featured posts enabled
+        if(isset($_POST['enable-featured'])){
+            $compendium_enable_featured['value'] = $_POST['enable-featured'];
+        }
+        else {
+            $compendium_enable_featured['value'] = 0;
+        }
+
+        //Get featured posts per page
+        $compendium_featured_per_page['value'] = $_POST['featured-per-page'];
 
         //Get page title
         $compendium_title['value'] = $_POST['compendium-title'];
@@ -407,9 +400,10 @@ function compendium_resource_options() {
 
         // Save the values in the database
         update_option($compendium_save_as, $compendium_options);
-        update_option( 'compendium-external-url', $compendium_external_url);
         update_option('compendium-posts-per-page', $compendium_posts_per_page);
         update_option( 'compendium-enable-icons', $compendium_enable_icons);
+        update_option( 'compendium-enable-featured-posts', $compendium_enable_featured);
+        update_option( 'compendium-featured-per-page', $compendium_featured_per_page);
         update_option( 'compendium-title', $compendium_title);
 
         // Display a "settings saved" message on the screen
@@ -440,6 +434,16 @@ function compendium_resource_options() {
                     <p>
                         <?=$compendium_title['description']?>
                         <input name="compendium-title" type="text" value="<?=$compendium_title['value'] ?>" />
+                    </p>
+                    <hr/>
+                    <h4>Featured posts will only appear on the first page and will be ordered by most recent post.</h4>
+                    <p>
+                        <?=$compendium_enable_featured['description']?>
+                        <input name="enable-icons" type="checkbox" value="1" <?php if( $compendium_enable_featured['value'] === '1'){ echo ' checked="checked"'; } ?> />
+                    </p>
+                    <p>
+                        <?=$compendium_featured_per_page['description']?>
+                        <input name="posts-per-page" type="number" value="<?=$compendium_featured_per_page['value'] ?>" />
                     </p>
                 </div>
             </div>
@@ -487,25 +491,6 @@ function compendium_resource_options() {
                 }
             }
             ?>
-            <div class="metabox">
-                <div class="inside">
-                    <h3>External URL Field</h3>
-                    <h4>Please select the posts types to add an external URL field to the post meta.</h4>
-
-                    <?php
-                    foreach($compendium_active_external as $external) {
-                        ?>
-                        <p>
-                            <input name="<?=$external['db_name']?>" type="checkbox" value="1" <?php if ($compendium_external_url[$external['db_name']] === '1') { echo ' checked="checked"'; } ?> />
-                            &nbsp; <?=$external['description']?>
-                        </p>
-
-                        <?php
-                    }
-
-                    ?>
-                </div>
-            </div>
 
             <p class="submit">
                 <input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Save Changes') ?>" />

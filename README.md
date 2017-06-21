@@ -11,11 +11,14 @@ Finally, add the shortcode [compendium] to the page that you would like the reso
 
 ###Future additions
 - Ability to select only certain categories per post type to be displayed.
-- Featured post options.
 - Include RSS feed.
 - Ability to create common post types within plugin.
 
 ###Change log
+
+#####Version 0.6
+* Added featured post options
+* External URL and featured post metabox will now appear in admin for any post type enabled in resource center.
 
 #####Version 0.5.2
 * Added several new icons for post types

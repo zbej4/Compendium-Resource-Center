@@ -140,6 +140,9 @@ class Compendium_Resources
     {
         //Store original query Arguments
         $args = $query_args;
+        $do_not_duplicate = '';
+        $featured_per_page = get_option('compendium-featured-per-page')['value'];
+        $featured_exists = false;
 
         //Markup
         $layer_open = '<section class="layer layer--resources editor-styles form-styles"><div class="inner clearfix">';
@@ -162,13 +165,104 @@ class Compendium_Resources
         $link_open = '<a class="resource__link" href="%LINK%">';
         $link_close = '</a>';
 
+        $featured_icon = '<div class="resource__icon-featured"><i class="fa fa-star"></i></div>';
 
         // Do icons?
         $icons = get_option('compendium-enable-icons');
+        // Do featured posts?
+        $featured = get_option('compendium-enable-featured-posts');
 
         $output = '';
 
         $output .= $layer_open;
+
+        if ( !is_paged() && $featured ) {
+            //Copy query args to maintain filters and original query
+            $featured_args = $query_args;
+
+            $featured_args['posts_per_page'] = $featured_per_page;
+            $featured_args['meta_query'] = array(
+                'featured' => array(
+                    'key' => 'compendium-featured-post',
+                    'value' => 'yes'
+                ),
+            );
+
+            //Featured posts query
+            $documents = new WP_Query($featured_args);
+
+                //Make sure we have posts and format them
+                if( !is_wp_error($documents) && $documents->have_posts() )
+                {
+                    $featured_exists = true;
+                    foreach( $documents->posts as $document )
+                    {
+                        $item_open = '<div class="resource featured-resource %TYPE%">';
+
+                        $id = $document->ID;
+
+                        //Store id to not duplicate post
+                        $do_not_duplicate[] = $id;
+
+                        // Title
+                        //Check if has external link
+                        $external_link = get_field('compendium_external_url', $id) ?: '';
+                        $final_link = empty($external_link) ? get_permalink($id) : $external_link;
+                        $title = get_the_title($id);
+                        $title = (strlen($title) > 60) ? trim(substr($title, 0, 60))."..." : $title;
+                        $title = str_replace('%LINK%', $final_link, $link_open) . $title . $link_close;
+
+                        //Info Link
+                        $infobar_open_link = str_replace('%LINK%', $final_link, $infobar_open);
+
+                        // Document Type
+                        $docobj = get_post_type_object($document->post_type);
+                        $doctype = $doctype_open . $docobj->label . $doctype_close;
+                        if($document->post_type == 'post')
+                        {
+                            $doctype = $doctype_open . 'Blog Post' . $doctype_close;
+                        }
+
+                        // Icon for post type
+                        $icon = '';
+                        if($icons)
+                        {
+                            if($document->post_type == 'post')
+                            {
+                                $icon = $icon_open . Compendium_Resources::get_icon('rss') . $icon_close;
+                            }
+                            else{
+                                $icon = $icon_open . Compendium_Resources::get_icon($document->post_type) . $icon_close;
+                            }
+                        }
+
+                        //Add class for post type
+                        if($document->post_type == 'post')
+                            $item_open = str_replace( '%TYPE%', 'blog-post', $item_open);
+                        else
+                            $item_open = str_replace( '%TYPE%', $document->post_type, $item_open);
+
+
+                        // Social sharing
+                        // Share
+                        $share = '<a class="resource_social addthis_button_compact" addthis:url="' . get_permalink($document->ID) . '" addthis:title="' . get_the_title($document->ID)	. '"><span>Share</span></a>';
+
+                        // Image
+                        $image = the_post_thumbnail();
+                        $image = empty($image) ? $image_open . '<img src="' . plugins_url( 'css/images/placeholder.jpg', __FILE__ ) . '" alt="' . $image['alt'] . '">' . $share . $image_close : $image_open . '<img src="' . $image['url'] . '" alt="' . $image['alt'] . '">' . $share . $image_close;
+
+                        $output .= $item_open . $featured_icon . $image . $title . $infobar_open_link . $icon . $doctype . $infobar_close . $item_close;
+
+                    }
+
+                    wp_reset_postdata();
+                }
+
+            //Prepare for remaining posts query
+            $args['post__not_in']=$do_not_duplicate;
+            $args['paged'] = get_query_var( 'paged' );
+            $args['posts_per_page'] = $args['posts_per_page'] - count($do_not_duplicate);
+        }
 
         $documents = new WP_Query($args);
 
@@ -191,7 +285,7 @@ class Compendium_Resources
                 $title = (strlen($title) > 60) ? trim(substr($title, 0, 60))."..." : $title;
                 $title = str_replace('%LINK%', $final_link, $link_open) . $title . $link_close;
 
-                //Info LINK
+                //Info Link
                 $infobar_open_link = str_replace('%LINK%', $final_link, $infobar_open);
 
                 // Document Type
@@ -202,7 +296,7 @@ class Compendium_Resources
                     $doctype = $doctype_open . 'Blog Post' . $doctype_close;
                 }
 
-                // Icon for Category
+                // Icon for post type
                 $icon = '';
                 if($icons)
                 {
@@ -238,7 +332,7 @@ class Compendium_Resources
 
             wp_reset_postdata();
         }
-        else if (!$documents->have_posts()) {
+        else if (!$documents->have_posts() && !$featured_exists) {
             $output = $layer_open . '<h2 style="text-align:center;">No posts found</h2>' . $layer_close;
         }
         echo $output;

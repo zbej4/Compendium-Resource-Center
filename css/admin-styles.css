@@ -30,6 +30,10 @@ input[name="compendium-title"] {
     width:100%;
 }
 .svg-list tr td:first-child {
+    width:15%;
+    padding-left:10px;
+}
+.svg-list tr td:nth-child(2) {
     width:30%;
 }
 .svg-list tr:nth-child(even) {

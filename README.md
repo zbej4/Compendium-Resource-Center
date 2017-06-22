@@ -12,9 +12,18 @@ Finally, add the shortcode [compendium] to the page that you would like the reso
 ###Future additions
 - Ability to select only certain categories per post type to be displayed.
 - Include RSS feed.
-- Ability to create common post types within plugin.
+
+###Known bugs
+* After enabling or disabling post type, new post type won't appear/disappear until page refresh.
 
 ###Change log
+
+#####Version 0.7
+* Added ability to create common post types supported by plugin
+* Changed admin page for easier maintenance.
+
+#####Version 0.6.1
+* Added more robust error checking and notifications for settings.
 
 #####Version 0.6
 * Added featured post options

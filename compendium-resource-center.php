@@ -414,6 +414,14 @@ function compendium_resource_options() {
             //Get page title
             $compendium_title['value'] = $_POST['compendium-title'];
 
+            //Get and save category selections
+            foreach ($_POST as $key => $value) {
+                //If post variable name matches the beginning of the radio button names
+                if (strpos($key, 'enable-category') === 0){
+                    update_option('compendium-'.$key, $value);
+                }
+            }
+
             // Save the values in the database
             update_option($compendium_save_as, $compendium_options);
             update_option('compendium-posts-per-page', $compendium_posts_per_page);

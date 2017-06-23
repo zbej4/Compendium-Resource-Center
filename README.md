@@ -18,6 +18,11 @@ Finally, add the shortcode [compendium] to the page that you would like the reso
 
 ###Change log
 
+#####Version 0.8
+* Added feature to create custom post types
+* Removed enable post type feature - user can simply use a slug provided in the table and name their post type by preference
+* Fixed script loading issue
+
 #####Version 0.7
 * Added ability to create common post types supported by plugin
 * Changed admin page for easier maintenance.

@@ -59,3 +59,33 @@ svg {
     stroke:#4c4c4c;
     stroke-width:3;
 }
+.custom-types {
+    width:50%;
+}
+.custom-types tr:nth-child(even) {
+    background:#ddd;
+}
+.custom-types td{
+    text-align:center;
+    padding:5px 0;
+}
+.custom-types td input{
+    border:1px solid #ccc;
+}
+.custom-types .custom-new{
+    background:#ccc;
+}
+.custom-types .custom-type-delete {
+    background: red;
+    color: #fff;
+    height: 22px;
+    display: block;
+    vertical-align: middle;
+    padding: 0px 10px;
+    line-height: 22px;
+    border: 1px solid red;
+    cursor:pointer;
+}
+.custom-types .custom-type-delete:hover {
+    background:#bb0000;
+}

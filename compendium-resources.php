@@ -46,6 +46,12 @@ class Compendium_Resources
         $document_types = $activePosts;
         // Get page title
         $page_title = get_option('compendium-title')['value'];
+        if ($page_title != ''){
+            $resource_head = '<div id="compendium"><div class="inner clearfix"><div class="resource_head_bar"><h2 class="resource_head">'.$page_title.'</h2>';
+        }
+        else {
+            $resource_head = '<div id="compendium"><div class="inner clearfix"><div class="resource_head_bar">';
+        }
 
         // Make sure they're not empty
         if( empty($taxonomies) || empty($document_types) )
@@ -56,7 +62,6 @@ class Compendium_Resources
 
         $clear_btn = '<a href="//'. $url . '" title="Reset" class="clear_form_link">Reset</a>';
         $search_icon = '<a href="#" title="Search" class="search_form_link"><i class="fa fa-search"></i></a>';
-        $resource_head = '<div id="compendium"><div class="inner clearfix"><div class="resource_head_bar"><h2 class="resource_head">'.$page_title.'</h2>';
         $filter_form_open = '<div class="resource_bar_nav"><form action="//'. $url .'" method="get" class="filter-form" id="filter">';
         $filter_form_close = '<button>Apply</button>'. $clear_btn .$search_icon;
         $topic_menu_open = '<select id="topic-menu" name="topic-filter"><option>Browse by Topic</option>';

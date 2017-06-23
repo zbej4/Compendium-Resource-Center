@@ -517,7 +517,7 @@ class Compendium_Resources
                 return array(
                     'name'=> 'Brochure',
                     'plural' => 'Brochures',
-                    'dashicons' => 'data:image/svg+xml;base64,' . base64_encode( '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 100 100"><path fill="black" d="M34.9 95l-30-21.4V5l30 21.4L64.9 5l30 21.4V95l-30-21.4zM34.9 26.4V95M64.9 73.6V5.1"></path></svg>' ),
+                    'dashicons' => 'dashicons-admin-post',
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" enable-background="new 0 0 100 100"><style type="text/css">.st0{fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}</style><path class="st0 line" d="M34.9 95l-30-21.4V5l30 21.4L64.9 5l30 21.4V95l-30-21.4zM34.9 26.4V95M64.9 73.6V5.1"/></svg>'
                 );
 
@@ -597,13 +597,6 @@ class Compendium_Resources
                     'plural' => 'Items',
                     'dashicons' => 'dashicons-admin-post',
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" enable-background="new 0 0 100 100"><style type="text/css">.st0{fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;} .st1{fill:none;stroke:#000;stroke-width:2;stroke-linejoin:round;stroke-miterlimit:10;}</style><path class="st0 line" d="M81.3 12.8v47H18.7v-47zM10.9 67.6V10.9c0-3.2 2.6-5.9 5.9-5.9h66.5c3.2 0 5.9 2.6 5.9 5.9v56.7"/><path class="st0 line" d="M57.8 67.6v3.9H42.2v-3.9H6.9v7.8c0 2.2 1.8 3.9 3.9 3.9H89c2.2 0 3.9-1.8 3.9-3.9v-7.8H57.8zM7 95h85.9M50 95V79.3"/><circle class="st0 line" cx="63.7" cy="26.5" r="5.9"/><circle class="st0 line" cx="63.7" cy="46.1" r="5.9"/><circle class="st0 line" cx="36.3" cy="36.3" r="5.9"/><path class="st1 line" d="M41.6 33.8L58 27.3M41.6 38.8L58 45.3"/></svg>'
-                );
-            case 'managed':
-                return array(
-                    'name'=> 'Managed',
-                    'plural' => 'Managed',
-                    'dashicons' => 'dashicons-edit',
-                    'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" enable-background="new 0 0 100 100"><style type="text/css">.st0{fill:none;stroke:#000;stroke-width:3;stroke-linejoin:round;stroke-miterlimit:10;} .st1{fill:none;stroke:#000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;} .st4{fill:none;stroke:#000;stroke-width:3;stroke-miterlimit:10;}</style><path class="st0 line" d="M49 91.3H4.5v-89h46.6l21.2 21.2v36"/><path class="st1 line" d="M51.1 2.3v21.2h21.2"/><path class="st4 line" d="M62.81 79.39l15.98-15.98 10.747 10.748-15.98 15.98zM58.4 84.8l-3.1 10.8c-.2.6 0 1.2.4 1.6.3.3.7.5 1.2.5.2 0 .3 0 .5-.1l10.8-3.1-9.8-9.7zM95.1 66.3l-8.4-8.4c-.7-.7-1.7-.7-2.4 0l-5.5 5.5 10.8 10.8 5.5-5.5c.6-.7.6-1.7 0-2.4zM19.4 35.4l6.3 6.3 10.5-10.5M40.7 39.7h21M40.7 56.7h21M19.4 52.5l6.3 6.3 10.5-10.5"/></svg>'
                 );
             case 'mms':
                 return array(

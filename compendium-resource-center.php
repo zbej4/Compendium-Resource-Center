@@ -143,7 +143,6 @@ function compendium_activate() {
     add_option( 'compendium-enable-featured-posts', array('description' => 'Enable Featured posts', 'value' => 0));
     add_option( 'compendium-featured-per-page', array('description' => 'Featured posts per page', 'value' => 12));
     add_option( 'compendium-title', array('description' => 'Page Title', 'value' => 'Resource Center'));
-    add_option( 'compendium-registered-posts', array());
     add_option( 'compendium-registered-posts-custom', array());
     add_option($compendium_save_as, $init_options);
 }
@@ -155,20 +154,11 @@ register_activation_hook( __FILE__, 'compendium_activate' );
  *
  *-------------------------------------------------------*/
 function compendium_register_enabled_types(){
-    $compendium_registered_posts = get_option('compendium-registered-posts');
     $compendium_registered_posts_custom = get_option('compendium-registered-posts-custom');
-
-    //Loop for pregenerated post types
-    foreach($compendium_registered_posts as $key => $value){
-        if ($value === '1'){
-            $type = Compendium_Resources::get_meta_info($key);
-            compendium_register_type($key,$type['name'],$type['plural'],$type['dashicon']);
-        }
-    }
 
     //Loop for custom post types
     foreach($compendium_registered_posts_custom as $key => $value){
-        $icon = Compendium_Resources::get_meta_info($value['slug']);
+        $icon = Compendium_Resources::get_meta_info($value['slug'])['dashicons'];
         compendium_register_type($value['slug'],$value['name'],$value['plural'],$icon);
     }
 }
@@ -349,12 +339,12 @@ add_action('wp_loaded', 'compendium_register_meta_fields');
 
 /**--------------------------------------------------------
  *
- *  WP Admin page
+ *  WP Admin Main Settings page
  *
  *-------------------------------------------------------*/
 add_action( 'admin_menu', 'admin_resource' );
 function admin_resource() {
-    add_options_page( 'Compendium Resource Center Settings', 'Compendium Resource Center', 'manage_options', 'compendium-resource-center', 'compendium_resource_options' );
+    add_menu_page( 'Compendium Resource Center Settings', 'Compendium Resource Center', 'manage_options', 'compendium-resource-center', 'compendium_resource_options', 'dashicons-welcome-learn-more', 30 );
 }
 
 
@@ -376,129 +366,67 @@ function compendium_resource_options() {
     $compendium_featured_per_page = get_option('compendium-featured-per-page');
     $compendium_enable_icons = get_option('compendium-enable-icons');
     $compendium_title = get_option('compendium-title');
-    $compendium_registered_posts = get_option('compendium-registered-posts');
-    $compendium_registered_posts_custom = get_option('compendium-registered-posts-custom');
 
     if ( isset($_POST['submit'])){
-        //Processing for settings form
-        if($_POST['submit'] === 'Save Changes'){
-
-            // Check hidden field is set to verify submitted by user
-            if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ) {
-                // Get enabled post type values
-                foreach($compendium_active_posts as $option) {
-                    if(isset($_POST[$option['db_name']])) {
-                        $compendium_options[$option['db_name']] = $_POST[$option['db_name']];
-                    }
-                    else {
-                        $compendium_options[$option['db_name']] = "0";
-                    }
-                }
-                //Get posts per page value
-                if(isset($_POST['posts-per-page']) && $_POST['posts-per-page']>0 ){
-                    $compendium_posts_per_page['value'] = $_POST['posts-per-page'];
+        // Check hidden field is set to verify submitted by user
+        if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ) {
+            // Get enabled post type values
+            foreach($compendium_active_posts as $option) {
+                if(isset($_POST[$option['db_name']])) {
+                    $compendium_options[$option['db_name']] = $_POST[$option['db_name']];
                 }
                 else {
-                    add_settings_error( 'options-general.php?page=compendium-resource-center', '110', 'Posts per page must be greater than 0.');
+                    $compendium_options[$option['db_name']] = "0";
                 }
-
-                //Get icons enabled
-                if(isset($_POST['enable-icons'])){
-                    $compendium_enable_icons['value'] = $_POST['enable-icons'];
-                }
-                else {
-                    $compendium_enable_icons['value'] = 0;
-                }
-
-                //Get featured posts enabled
-                if(isset($_POST['enable-featured'])){
-                    $compendium_enable_featured['value'] = $_POST['enable-featured'];
-                }
-                else {
-                    $compendium_enable_featured['value'] = 0;
-                }
-
-                //Get featured posts per page
-                if(isset($_POST['featured-per-page']) && $_POST['featured-per-page']>0 && $_POST['featured-per-page']<$_POST['posts-per-page'] ){
-                    $compendium_featured_per_page['value'] = $_POST['featured-per-page'];
-                }
-                else {
-                    add_settings_error( 'options-general.php?page=compendium-resource-center', '120', 'Featured posts per page must be greater than 0 and less than the "Posts per page" field.');
-                }
-
-                //Get page title
-                $compendium_title['value'] = $_POST['compendium-title'];
-
-                //Empty registered posts and reset only those active
-                $compendium_registered_posts = array();
-
-                foreach ($_POST as $key => $value) {
-                    //Get and save category selections
-                    //If post variable name matches the beginning of the radio button names
-                    if (strpos($key, 'enable-category') === 0){
-                        update_option('compendium-'.$key, $value);
-                    }
-
-                    //Get and save types to register
-                    //If post variable name matches the beginning of checkbox names
-                    if (strpos($key, 'register-type-') === 0){
-                        $type_name = substr($key, strlen('register-type-'));
-                        if(isset($_POST[$key])) {
-                            $compendium_registered_posts[$type_name] = $value;
-                        }
-                        else {
-                            $compendium_registered_posts[$type_name] = 0;
-                        }
-                    }
-
-                }
-
-                // Save the values in the database
-                update_option($compendium_save_as, $compendium_options);
-                update_option('compendium-posts-per-page', $compendium_posts_per_page);
-                update_option( 'compendium-enable-icons', $compendium_enable_icons);
-                update_option( 'compendium-enable-featured-posts', $compendium_enable_featured);
-                update_option( 'compendium-featured-per-page', $compendium_featured_per_page);
-                update_option( 'compendium-title', $compendium_title);
-                update_option( 'compendium-registered-posts', $compendium_registered_posts);
-
-                // Display a "settings saved" message on the screen
-                echo '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
-
             }
-        }
-        //Processing for adding custom types
-        elseif ($_POST['submit'] === 'Save Types'){
-            // Check hidden field is set to verify submitted by user
-            if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ){
-                //Reset array
-                $compendium_registered_posts_custom = array();
-                foreach ($_POST['register-type'] as $key => $value) {
-                    $compendium_registered_posts_custom[] = $value;
-                }
-                //Add custom fields to array if not empty
-                if ($_POST['register-custom-name'] != '' && $_POST['register-custom-plural'] != '' && $_POST['register-custom-slug'] != '') {
-                    $slug = strtolower(preg_replace('/[^a-zA-Z0-9-_\.]/','', $_POST['register-custom-slug']));
-
-                    $compendium_registered_posts_custom[] = array(
-                        'name' => $_POST['register-custom-name'],
-                        'plural' => $_POST['register-custom-plural'],
-                        'slug' => $slug,
-                    );
-                }
-                elseif ( ($_POST['register-custom-name'] === '' || $_POST['register-custom-plural'] === '' || $_POST['register-custom-slug'] === '') && ($_POST['register-custom-name'] != '' || $_POST['register-custom-plural'] != '' || $_POST['register-custom-slug'] != '') ) {
-                    add_settings_error( 'options-general.php?page=compendium-resource-center', '130', 'You must fill out all three post type fields.');
-                }
-
-                update_option( 'compendium-registered-posts-custom', $compendium_registered_posts_custom);
-
-                // Display a "settings saved" message on the screen
-                echo '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
+            //Get posts per page value
+            if(isset($_POST['posts-per-page']) && $_POST['posts-per-page']>0 ){
+                $compendium_posts_per_page['value'] = $_POST['posts-per-page'];
             }
-        }
+            else {
+                add_settings_error( 'options-general.php?page=compendium-resource-center', '110', 'Posts per page must be greater than 0.');
+            }
 
+            //Get icons enabled
+            if(isset($_POST['enable-icons'])){
+                $compendium_enable_icons['value'] = $_POST['enable-icons'];
+            }
+            else {
+                $compendium_enable_icons['value'] = 0;
+            }
+
+            //Get featured posts enabled
+            if(isset($_POST['enable-featured'])){
+                $compendium_enable_featured['value'] = $_POST['enable-featured'];
+            }
+            else {
+                $compendium_enable_featured['value'] = 0;
+            }
+
+            //Get featured posts per page
+            if(isset($_POST['featured-per-page']) && $_POST['featured-per-page']>0 && $_POST['featured-per-page']<$_POST['posts-per-page'] ){
+                $compendium_featured_per_page['value'] = $_POST['featured-per-page'];
+            }
+            else {
+                add_settings_error( 'options-general.php?page=compendium-resource-center', '120', 'Featured posts per page must be greater than 0 and less than the "Posts per page" field.');
+            }
+
+            //Get page title
+            $compendium_title['value'] = $_POST['compendium-title'];
+
+            // Save the values in the database
+            update_option($compendium_save_as, $compendium_options);
+            update_option('compendium-posts-per-page', $compendium_posts_per_page);
+            update_option( 'compendium-enable-icons', $compendium_enable_icons);
+            update_option( 'compendium-enable-featured-posts', $compendium_enable_featured);
+            update_option( 'compendium-featured-per-page', $compendium_featured_per_page);
+            update_option( 'compendium-title', $compendium_title);
+
+            // Display a "settings saved" message on the screen
+            echo '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
+
+        }
     }
-
 
     ?>
 
@@ -582,319 +510,89 @@ function compendium_resource_options() {
                 }
             }
             ?>
-            <div class="metabox">
-                <div class="inside">
-                    <h3>Register Post Types (Optional)</h3>
-                    <h4>Enable any of the following to register the corresponding post type (uses first slug in list).  If you choose to create your own, any of the listed slugs will still return the appropriate icon.</h4>
-                    <table class="svg-list">
-                        <tr>
-                            <th>Post Type</th>
-                            <th>slugs</th>
-                            <th>Icon</th>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-analyst_report" type="checkbox" value="1" <?php if($compendium_registered_posts['analyst_report'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('analyst_report')['name']; ?>
-                            </td>
-                            <td>analyst_report</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('analyst_report')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-asset" type="checkbox" value="1" <?php if($compendium_registered_posts['asset'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('asset')['name']; ?>
-                            </td>
-                            <td>asset</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('asset')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-audit_report" type="checkbox" value="1" <?php if($compendium_registered_posts['audit_report'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('audit_report')['name']; ?>
-                            </td>
-                            <td>audit_report</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('audit_report')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-award" type="checkbox" value="1" <?php if($compendium_registered_posts['award'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('award')['name']; ?>
-                            </td>
-                            <td>award</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('award')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-bar" type="checkbox" value="1" <?php if($compendium_registered_posts['bar'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('bar')['name']; ?>
-                            </td>
-                            <td>bar</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('bar')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-benchmark_report" type="checkbox" value="1" <?php if($compendium_registered_posts['benchmark_report'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('benchmark_report')['name']; ?>
-                            </td>
-                            <td>benchmark_report</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('benchmark_report')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-brochure" type="checkbox" value="1" <?php if($compendium_registered_posts['brochure'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('brochure')['name']; ?>
-                            </td>
-                            <td>brochure</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('brochure')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-business_intelligence" type="checkbox" value="1" <?php if($compendium_registered_posts['business_intelligence'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('business_intelligence')['name']; ?>
-                            </td>
-                            <td>business_intelligence</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('business_intelligence')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-calendar" type="checkbox" value="1" <?php if($compendium_registered_posts['calendar'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('calendar')['name']; ?>
-                            </td>
-                            <td>calendar</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('calendar')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-call_accounting" type="checkbox" value="1" <?php if($compendium_registered_posts['call_accounting'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('call_accounting')['name']; ?>
-                            </td>
-                            <td>call_accounting</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('call_accounting')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-case_study" type="checkbox" value="1" <?php if($compendium_registered_posts['case_study'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('case_study')['name']; ?>
-                            </td>
-                            <td>case_study, case-study</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('case_study')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-cost_allocation" type="checkbox" value="1" <?php if($compendium_registered_posts['cost_allocation'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('cost_allocation')['name']; ?>
-                            </td>
-                            <td>cost_allocation</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('cost_allocation')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-expense_management" type="checkbox" value="1" <?php if($compendium_registered_posts['expense_management'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('expense_management')['name']; ?>
-                            </td>
-                            <td>expense_management</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('expense_management')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-fact_sheet" type="checkbox" value="1" <?php if($compendium_registered_posts['fact_sheet'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('fact_sheet')['name']; ?>
-                            </td>
-                            <td>fact_sheet</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('fact_sheet')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-infographic" type="checkbox" value="1" <?php if($compendium_registered_posts['infographic'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('infographic')['name']; ?>
-                            </td>
-                            <td>infographic</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('infographic')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-insight_analytics" type="checkbox" value="1" <?php if($compendium_registered_posts['insight_analytics'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('insight_analytics')['name']; ?>
-                            </td>
-                            <td>insight_analytics</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('insight_analytics')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-item" type="checkbox" value="1" <?php if($compendium_registered_posts['item'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('item')['name']; ?>
-                            </td>
-                            <td>item</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('item')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-managed" type="checkbox" value="1" <?php if($compendium_registered_posts['managed'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('managed')['name']; ?>
-                            </td>
-                            <td>managed</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('managed')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-mms" type="checkbox" value="1" <?php if($compendium_registered_posts['mms'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('mms')['name']; ?>
-                            </td>
-                            <td>mms</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('mms')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-on-prem" type="checkbox" value="1" <?php if($compendium_registered_posts['on-prem'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('on-prem')['name']; ?>
-                            </td>
-                            <td>on-prem</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('on-prem')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-play" type="checkbox" value="1" <?php if($compendium_registered_posts['play'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('play')['name']; ?>
-                            </td>
-                            <td>play</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('play')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-rss" type="checkbox" value="1" <?php if($compendium_registered_posts['rss'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('rss')['name']; ?>
-                            </td>
-                            <td>rss, post</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('rss')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-press_release" type="checkbox" value="1" <?php if($compendium_registered_posts['press_release'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('press_release')['name']; ?>
-                            </td>
-                            <td>press_release</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('press_release')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-research" type="checkbox" value="1" <?php if($compendium_registered_posts['research'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('research')['name']; ?>
-                            </td>
-                            <td>research</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('research')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-restaurant" type="checkbox" value="1" <?php if($compendium_registered_posts['restaurant'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('restaurant')['name']; ?>
-                            </td>
-                            <td>restaurant</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('restaurant')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-saas" type="checkbox" value="1" <?php if($compendium_registered_posts['saas'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('saas')['name']; ?>
-                            </td>
-                            <td>saas</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('saas')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-service_support" type="checkbox" value="1" <?php if($compendium_registered_posts['service_support'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('service_support')['name']; ?>
-                            </td>
-                            <td>service_support</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('service_support')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-share_service" type="checkbox" value="1" <?php if($compendium_registered_posts['share_service'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('share_service')['name']; ?>
-                            </td>
-                            <td>share_service</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('share_service')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-staff" type="checkbox" value="1" <?php if($compendium_registered_posts['staff'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('staff')['name']; ?>
-                            </td>
-                            <td>staff</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('staff')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-tem" type="checkbox" value="1" <?php if($compendium_registered_posts['tem'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('tem')['name']; ?>
-                            </td>
-                            <td>tem</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('tem')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-usage" type="checkbox" value="1" <?php if($compendium_registered_posts['usage'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('usage')['name']; ?>
-                            </td>
-                            <td>usage</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('usage')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-video" type="checkbox" value="1" <?php if($compendium_registered_posts['video'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('video')['name']; ?>
-                            </td>
-                            <td>video</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('video')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-webinar" type="checkbox" value="1" <?php if($compendium_registered_posts['webinar'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('webinar')['name']; ?>
-                            </td>
-                            <td>webinar</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('webinar')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-wem" type="checkbox" value="1" <?php if($compendium_registered_posts['wem'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('wem')['name']; ?>
-                            </td>
-                            <td>wem</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('wem')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-whitepaper" type="checkbox" value="1" <?php if($compendium_registered_posts['whitepaper'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('whitepaper')['name']; ?>
-                            </td>
-                            <td>whitepaper, white-paper</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('whitepaper')['icon']; ?></div></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input name="register-type-youtube" type="checkbox" value="1" <?php if($compendium_registered_posts['youtube'] === '1') { echo 'checked="checked"'; }?>/>
-                                <? echo Compendium_Resources::get_meta_info('youtube')['name']; ?>
-                            </td>
-                            <td>youtube</td>
-                            <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('youtube')['icon']; ?></div></td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
 
             <p class="submit">
                 <input type="submit" name="submit" class="button-primary" value="<?php esc_attr_e('Save Changes') ?>" />
             </p>
 
         </form>
+    </div>
+    <?php
+}
+
+/**--------------------------------------------------------
+ *
+ *  WP Admin Manage Post Types page
+ *
+ *-------------------------------------------------------*/
+add_action( 'admin_menu', 'admin_resource_posts' );
+function admin_resource_posts() {
+    add_submenu_page( 'compendium-resource-center', 'Compendium Resource Center Custom Post Types', 'Manage Post Types', 'manage_options', 'compendium-resource-center-manage-types', 'compendium_resource_post_options');
+}
+
+function compendium_resource_post_options(){
+
+    if ( !current_user_can( 'manage_options' ) ) {
+    wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+    }
+
+    $hidden_field_name = 'compendium_submit_hidden';
+
+    // Read in existing option value from database
+    $compendium_registered_posts_custom = get_option('compendium-registered-posts-custom');
+
+    if ( isset($_POST['submit'])){
+        // Check hidden field is set to verify submitted by user
+        if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ){
+            //Reset array
+            $compendium_registered_posts_custom = array();
+
+            //Add old elements if still available
+            if ( isset($_POST['register-type']) ){
+                foreach ($_POST['register-type'] as $key => $value) {
+                    $compendium_registered_posts_custom[] = $value;
+                }
+            }
+            //Add custom fields to array if not empty
+            if ($_POST['register-custom-name'] != '' && $_POST['register-custom-plural'] != '' && $_POST['register-custom-slug'] != '') {
+                $slug = strtolower(preg_replace('/[^a-zA-Z0-9-_\.]/','', $_POST['register-custom-slug']));
+
+                $compendium_registered_posts_custom[] = array(
+                    'name' => $_POST['register-custom-name'],
+                    'plural' => $_POST['register-custom-plural'],
+                    'slug' => $slug,
+                );
+            }
+            elseif ( ($_POST['register-custom-name'] === '' || $_POST['register-custom-plural'] === '' || $_POST['register-custom-slug'] === '') && ($_POST['register-custom-name'] != '' || $_POST['register-custom-plural'] != '' || $_POST['register-custom-slug'] != '') ) {
+                add_settings_error( 'options-general.php?page=compendium-resource-center', '130', 'You must fill out all three post type fields.');
+            }
+
+            update_option( 'compendium-registered-posts-custom', $compendium_registered_posts_custom);
+
+            // Display a "settings saved" message on the screen
+            echo '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
+            echo "<meta http-equiv='refresh' content='0'>";
+        }
+    }
+
+
+    ?>
+
+
+    <div class="wrap">
+        <h2>Compendium Resource Center - Manage Post Types</h2>
+        <?php settings_errors() ?>
+        <p>Here you can add custom post types so that they will be registered with Wordpress.</p>
+        <ul>
+            <li>Please note that this does NOT enable them for the resource center by default, and that you must select to enable them in the settings menu.</li>
+            <li>The post type will be created along with a category taxonomy that will be titled {slug}-category.</li>
+            <li>If the slug matches one of the below supported types then the corresponding icon will display in the resource center.</li>
+        </ul>
         <form name="custom-types" method="post" action="">
             <input type="hidden" name="<?=$hidden_field_name?>" value="Y">
             <div class="metabox">
                 <div class="inside">
                     <h3>Register New Custom Post Types</h3>
-                    <h4>Register a custom post type here if it is not available below.</h4>
                     <table class="custom-types">
                         <tr>
                             <th></th>
@@ -931,6 +629,163 @@ function compendium_resource_options() {
             </div>
 
         </form>
+
+        <div class="metabox">
+            <div class="inside">
+                <h3>Icons to appear in resource center (Optional)</h3>
+                <table class="svg-list">
+                    <tr>
+                        <th>slugs</th>
+                        <th>Icon</th>
+                    </tr>
+                    <tr>
+                        <td>Default - slug matches none of the following slugs</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('default')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>analyst_report</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('analyst_report')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>asset</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('asset')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>audit_report</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('audit_report')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>award</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('award')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>bar</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('bar')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>benchmark_report</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('benchmark_report')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>brochure</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('brochure')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>business_intelligence</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('business_intelligence')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>calendar</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('calendar')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>call_accounting</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('call_accounting')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>case_study, case-study</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('case_study')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>cost_allocation</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('cost_allocation')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>expense_management</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('expense_management')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>fact_sheet</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('fact_sheet')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>infographic</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('infographic')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>insight_analytics</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('insight_analytics')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>item</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('item')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>mms</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('mms')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>on-prem</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('on-prem')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>play</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('play')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>rss, post</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('rss')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>press_release</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('press_release')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>research</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('research')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>restaurant</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('restaurant')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>saas</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('saas')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>service_support</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('service_support')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>share_service</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('share_service')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>staff</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('staff')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>tem</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('tem')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>usage</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('usage')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>video</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('video')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>webinar</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('webinar')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>wem</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('wem')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>whitepaper, white-paper</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('whitepaper')['icon']; ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>youtube</td>
+                        <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('youtube')['icon']; ?></div></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
     </div>
     <?php
 }

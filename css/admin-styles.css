@@ -30,10 +30,6 @@ input[name="compendium-title"] {
     width:100%;
 }
 .svg-list tr td:first-child {
-    width:15%;
-    padding-left:10px;
-}
-.svg-list tr td:nth-child(2) {
     width:30%;
 }
 .svg-list tr:nth-child(even) {
@@ -74,6 +70,9 @@ svg {
 }
 .custom-types .custom-new{
     background:#ccc;
+}
+.custom-types td:first-child {
+    padding: 5px 10px;
 }
 .custom-types .custom-type-delete {
     background: red;

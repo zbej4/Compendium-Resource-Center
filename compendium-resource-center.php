@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Compendium Resource Center
  * Description: Provides the functionality to create and maintain a resource center that integrates several post types and categories.
- * Version:	 0.7
+ * Version:	 0.8
  * Author: Brandon Jones
  * Text Domain: compendium-resource-center
  */
@@ -102,7 +102,6 @@ function compendium_resource_center_register_required_plugins(){
  *
  *-------------------------------------------------------*/
 function compendium_scripts() {
-    wp_register_script( 'compendium-js', plugins_url( '/js/scripts.js', __FILE__ ), array( 'jquery' ) );
     wp_register_script( 'compendium-jquery-ui', 'https://code.jquery.com/ui/1.12.1/jquery-ui.min.js',  array( 'jquery' ), null, true );
     wp_register_script( 'compendium-page-js', plugins_url( '/js/page-scripts.js', __FILE__ ), array( 'jquery' ) );
 }
@@ -117,7 +116,9 @@ function compendium_styles() {
 add_action( 'wp_enqueue_scripts', 'compendium_styles' );
 function compendium_admin_styles() {
     wp_register_style( 'compendium-admin-css', plugins_url('/css/admin-styles.css', __FILE__ ) );
+    wp_register_script( 'compendium-js', plugins_url( '/js/scripts.js', __FILE__ ), array( 'jquery' ) );
     wp_enqueue_style( 'compendium-admin-css' );
+    wp_enqueue_script( 'compendium-js' );
 }
 add_action( 'admin_enqueue_scripts', 'compendium_admin_styles' );
 
@@ -143,6 +144,7 @@ function compendium_activate() {
     add_option( 'compendium-featured-per-page', array('description' => 'Featured posts per page', 'value' => 12));
     add_option( 'compendium-title', array('description' => 'Page Title', 'value' => 'Resource Center'));
     add_option( 'compendium-registered-posts', array());
+    add_option( 'compendium-registered-posts-custom', array());
     add_option($compendium_save_as, $init_options);
 }
 register_activation_hook( __FILE__, 'compendium_activate' );
@@ -154,11 +156,20 @@ register_activation_hook( __FILE__, 'compendium_activate' );
  *-------------------------------------------------------*/
 function compendium_register_enabled_types(){
     $compendium_registered_posts = get_option('compendium-registered-posts');
+    $compendium_registered_posts_custom = get_option('compendium-registered-posts-custom');
+
+    //Loop for pregenerated post types
     foreach($compendium_registered_posts as $key => $value){
         if ($value === '1'){
             $type = Compendium_Resources::get_meta_info($key);
             compendium_register_type($key,$type['name'],$type['plural'],$type['dashicon']);
         }
+    }
+
+    //Loop for custom post types
+    foreach($compendium_registered_posts_custom as $key => $value){
+        $icon = Compendium_Resources::get_meta_info($value['slug']);
+        compendium_register_type($value['slug'],$value['name'],$value['plural'],$icon);
     }
 }
 add_action('init', 'compendium_register_enabled_types');
@@ -218,7 +229,6 @@ function compendium_resource_center() {
     global $compendium_save_as;
 
     //Enqueue Scripts
-    wp_enqueue_script( 'compendium-js' );
     wp_enqueue_script( 'compendium-jquery-ui' );
     wp_enqueue_script( 'compendium-page-js' );
 
@@ -367,90 +377,129 @@ function compendium_resource_options() {
     $compendium_enable_icons = get_option('compendium-enable-icons');
     $compendium_title = get_option('compendium-title');
     $compendium_registered_posts = get_option('compendium-registered-posts');
+    $compendium_registered_posts_custom = get_option('compendium-registered-posts-custom');
 
-    // See if the user has posted us some information
-    // If they did, this hidden field will be set to 'Y'
-    if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ) {
-        // Get enabled post type values
-        foreach($compendium_active_posts as $option) {
-            if(isset($_POST[$option['db_name']])) {
-                $compendium_options[$option['db_name']] = $_POST[$option['db_name']];
-            }
-            else {
-                $compendium_options[$option['db_name']] = "0";
-            }
-        }
-        //Get posts per page value
-        if(isset($_POST['posts-per-page']) && $_POST['posts-per-page']>0 ){
-            $compendium_posts_per_page['value'] = $_POST['posts-per-page'];
-        }
-        else {
-            add_settings_error( 'options-general.php?page=compendium-resource-center', '110', 'Posts per page must be greater than 0.');
-        }
+    if ( isset($_POST['submit'])){
+        //Processing for settings form
+        if($_POST['submit'] === 'Save Changes'){
 
-        //Get icons enabled
-        if(isset($_POST['enable-icons'])){
-            $compendium_enable_icons['value'] = $_POST['enable-icons'];
-        }
-        else {
-            $compendium_enable_icons['value'] = 0;
-        }
-
-        //Get featured posts enabled
-        if(isset($_POST['enable-featured'])){
-            $compendium_enable_featured['value'] = $_POST['enable-featured'];
-        }
-        else {
-            $compendium_enable_featured['value'] = 0;
-        }
-
-        //Get featured posts per page
-        if(isset($_POST['featured-per-page']) && $_POST['featured-per-page']>0 && $_POST['featured-per-page']<$_POST['posts-per-page'] ){
-            $compendium_featured_per_page['value'] = $_POST['featured-per-page'];
-        }
-        else {
-            add_settings_error( 'options-general.php?page=compendium-resource-center', '120', 'Featured posts per page must be greater than 0 and less than the "Posts per page" field.');
-        }
-
-        //Get page title
-        $compendium_title['value'] = $_POST['compendium-title'];
-
-        //Empty registered posts and reset only those active
-        $compendium_registered_posts = array();
-
-        foreach ($_POST as $key => $value) {
-            //Get and save category selections
-            //If post variable name matches the beginning of the radio button names
-            if (strpos($key, 'enable-category') === 0){
-                update_option('compendium-'.$key, $value);
-            }
-
-            //Get and save types to register
-            //If post variable name matches the beginning of the radio button names
-            if (strpos($key, 'register-type-') === 0){
-                $type_name = substr($key, strlen('register-type-'));
-                if(isset($_POST[$key])) {
-                    $compendium_registered_posts[$type_name] = $value;
+            // Check hidden field is set to verify submitted by user
+            if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ) {
+                // Get enabled post type values
+                foreach($compendium_active_posts as $option) {
+                    if(isset($_POST[$option['db_name']])) {
+                        $compendium_options[$option['db_name']] = $_POST[$option['db_name']];
+                    }
+                    else {
+                        $compendium_options[$option['db_name']] = "0";
+                    }
+                }
+                //Get posts per page value
+                if(isset($_POST['posts-per-page']) && $_POST['posts-per-page']>0 ){
+                    $compendium_posts_per_page['value'] = $_POST['posts-per-page'];
                 }
                 else {
-                    $compendium_registered_posts[$type_name] = 0;
+                    add_settings_error( 'options-general.php?page=compendium-resource-center', '110', 'Posts per page must be greater than 0.');
                 }
+
+                //Get icons enabled
+                if(isset($_POST['enable-icons'])){
+                    $compendium_enable_icons['value'] = $_POST['enable-icons'];
+                }
+                else {
+                    $compendium_enable_icons['value'] = 0;
+                }
+
+                //Get featured posts enabled
+                if(isset($_POST['enable-featured'])){
+                    $compendium_enable_featured['value'] = $_POST['enable-featured'];
+                }
+                else {
+                    $compendium_enable_featured['value'] = 0;
+                }
+
+                //Get featured posts per page
+                if(isset($_POST['featured-per-page']) && $_POST['featured-per-page']>0 && $_POST['featured-per-page']<$_POST['posts-per-page'] ){
+                    $compendium_featured_per_page['value'] = $_POST['featured-per-page'];
+                }
+                else {
+                    add_settings_error( 'options-general.php?page=compendium-resource-center', '120', 'Featured posts per page must be greater than 0 and less than the "Posts per page" field.');
+                }
+
+                //Get page title
+                $compendium_title['value'] = $_POST['compendium-title'];
+
+                //Empty registered posts and reset only those active
+                $compendium_registered_posts = array();
+
+                foreach ($_POST as $key => $value) {
+                    //Get and save category selections
+                    //If post variable name matches the beginning of the radio button names
+                    if (strpos($key, 'enable-category') === 0){
+                        update_option('compendium-'.$key, $value);
+                    }
+
+                    //Get and save types to register
+                    //If post variable name matches the beginning of checkbox names
+                    if (strpos($key, 'register-type-') === 0){
+                        $type_name = substr($key, strlen('register-type-'));
+                        if(isset($_POST[$key])) {
+                            $compendium_registered_posts[$type_name] = $value;
+                        }
+                        else {
+                            $compendium_registered_posts[$type_name] = 0;
+                        }
+                    }
+
+                }
+
+                // Save the values in the database
+                update_option($compendium_save_as, $compendium_options);
+                update_option('compendium-posts-per-page', $compendium_posts_per_page);
+                update_option( 'compendium-enable-icons', $compendium_enable_icons);
+                update_option( 'compendium-enable-featured-posts', $compendium_enable_featured);
+                update_option( 'compendium-featured-per-page', $compendium_featured_per_page);
+                update_option( 'compendium-title', $compendium_title);
+                update_option( 'compendium-registered-posts', $compendium_registered_posts);
+
+                // Display a "settings saved" message on the screen
+                echo '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
+
+            }
+        }
+        //Processing for adding custom types
+        elseif ($_POST['submit'] === 'Save Types'){
+            // Check hidden field is set to verify submitted by user
+            if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ){
+                //Reset array
+                $compendium_registered_posts_custom = array();
+                foreach ($_POST['register-type'] as $key => $value) {
+                    $compendium_registered_posts_custom[] = $value;
+                }
+                //Add custom fields to array if not empty
+                if ($_POST['register-custom-name'] != '' && $_POST['register-custom-plural'] != '' && $_POST['register-custom-slug'] != '') {
+                    $slug = strtolower(preg_replace('/[^a-zA-Z0-9-_\.]/','', $_POST['register-custom-slug']));
+
+                    $compendium_registered_posts_custom[] = array(
+                        'name' => $_POST['register-custom-name'],
+                        'plural' => $_POST['register-custom-plural'],
+                        'slug' => $slug,
+                    );
+                }
+                elseif ( ($_POST['register-custom-name'] === '' || $_POST['register-custom-plural'] === '' || $_POST['register-custom-slug'] === '') && ($_POST['register-custom-name'] != '' || $_POST['register-custom-plural'] != '' || $_POST['register-custom-slug'] != '') ) {
+                    add_settings_error( 'options-general.php?page=compendium-resource-center', '130', 'You must fill out all three post type fields.');
+                }
+
+                update_option( 'compendium-registered-posts-custom', $compendium_registered_posts_custom);
+
+                // Display a "settings saved" message on the screen
+                echo '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
             }
         }
 
-        // Save the values in the database
-        update_option($compendium_save_as, $compendium_options);
-        update_option('compendium-posts-per-page', $compendium_posts_per_page);
-        update_option( 'compendium-enable-icons', $compendium_enable_icons);
-        update_option( 'compendium-enable-featured-posts', $compendium_enable_featured);
-        update_option( 'compendium-featured-per-page', $compendium_featured_per_page);
-        update_option( 'compendium-title', $compendium_title);
-        update_option( 'compendium-registered-posts', $compendium_registered_posts);
-
-        // Display a "settings saved" message on the screen
-        echo '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
-
     }
+
+
     ?>
 
 
@@ -533,7 +582,6 @@ function compendium_resource_options() {
                 }
             }
             ?>
-
             <div class="metabox">
                 <div class="inside">
                     <h3>Register Post Types (Optional)</h3>
@@ -837,8 +885,50 @@ function compendium_resource_options() {
             </div>
 
             <p class="submit">
-                <input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Save Changes') ?>" />
+                <input type="submit" name="submit" class="button-primary" value="<?php esc_attr_e('Save Changes') ?>" />
             </p>
+
+        </form>
+        <form name="custom-types" method="post" action="">
+            <input type="hidden" name="<?=$hidden_field_name?>" value="Y">
+            <div class="metabox">
+                <div class="inside">
+                    <h3>Register New Custom Post Types</h3>
+                    <h4>Register a custom post type here if it is not available below.</h4>
+                    <table class="custom-types">
+                        <tr>
+                            <th></th>
+                            <th>Name</th>
+                            <th>Plural name</th>
+                            <th>Slug</th>
+                        </tr>
+                        <?php
+                        foreach( $compendium_registered_posts_custom as $key => $value) {
+                            $name = 'register-type['.$key.'][name]' ;
+                            $plural = 'register-type['.$key.'][plural]';
+                            $slug = 'register-type['.$key.'][slug]';
+                            ?>
+                            <tr data-custom-type="<?=$key?>">
+                                <td><span class="custom-type-delete" data-custom-delete="<?=$key?>">Delete</span></td>
+                                <td><input name="<?=$name?>" type="text" value="<?=$value['name']?>" readonly/></td>
+                                <td><input name="<?=$plural?>" type="text" value ="<?=$value['plural']?>" readonly/></td>
+                                <td><input name="<?=$slug?>" type="text" value="<?=$value['slug']?>" readonly/></td>
+                            </tr>
+                            <?php
+                        }
+                        ?>
+                        <tr class="custom-new">
+                            <td>Add New:</td>
+                            <td><input name="register-custom-name" type="text" placeholder="Example" /></td>
+                            <td><input name="register-custom-plural" type="text" placeholder="Examples" /></td>
+                            <td><input name="register-custom-slug" type="text" placeholder="example" /></td>
+                        </tr>
+                    </table>
+                    <p class="submit">
+                        <input type="submit" name="submit" class="button-primary" value="<?php esc_attr_e('Save Types') ?>" />
+                    </p>
+                </div>
+            </div>
 
         </form>
     </div>

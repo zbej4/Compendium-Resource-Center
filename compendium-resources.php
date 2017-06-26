@@ -230,7 +230,7 @@ class Compendium_Resources
 
                         // Icon for post type
                         $icon = '';
-                        if($icons)
+                        if($icons['value'])
                         {
                             if($document->post_type == 'post')
                             {
@@ -303,7 +303,7 @@ class Compendium_Resources
 
                 // Icon for post type
                 $icon = '';
-                if($icons)
+                if($icons['value'])
                 {
                     if($document->post_type == 'post')
                     {

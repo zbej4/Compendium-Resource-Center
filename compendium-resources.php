@@ -259,8 +259,8 @@ class Compendium_Resources
                         $share = '<a class="resource_social addthis_button_compact" addthis:url="' . get_permalink($document->ID) . '" addthis:title="' . get_the_title($document->ID)	. '"><span>Share</span></a>';
 
                         // Image
-                        $image = the_post_thumbnail();
-                        $image = empty($image) ? $image_open . '<img src="' . plugins_url( 'css/images/placeholder.jpg', __FILE__ ) . '" alt="' . $image['alt'] . '">' . $share . $image_close : $image_open . '<img src="' . $image['url'] . '" alt="' . $image['alt'] . '">' . $share . $image_close;
+                        $image = get_the_post_thumbnail($id, 'medium');
+                        $image = empty($image) ? $image_open . '<img src="' . plugins_url( 'css/images/placeholder.jpg', __FILE__ ) . '" alt="">' . $share . $image_close : $image_open . '<img src="' . $image . '" alt="">' . $share . $image_close;
 
                         $output .= $item_open . $featured_icon . $image . $title . $infobar_open_link . $icon . $doctype . $infobar_close . $item_close;
 
@@ -332,8 +332,8 @@ class Compendium_Resources
                 $share = '<a class="resource_social addthis_button_compact" addthis:url="' . get_permalink($document->ID) . '" addthis:title="' . get_the_title($document->ID)	. '"><span>Share</span></a>';
 
                 // Image
-                $image = the_post_thumbnail();
-                $image = empty($image) ? $image_open . '<img src="' . plugins_url( 'css/images/placeholder.jpg', __FILE__ ) . '" alt="' . $image['alt'] . '">' . $share . $image_close : $image_open . '<img src="' . $image['url'] . '" alt="' . $image['alt'] . '">' . $share . $image_close;
+                $image = get_the_post_thumbnail($id, 'medium');
+                $image = empty($image) ? $image_open . '<img src="' . plugins_url( 'css/images/placeholder.jpg', __FILE__ ) . '" alt="">' . $share . $image_close : $image_open . '<img src="' . $image . '" alt="">' . $share . $image_close;
 
                 $output .= $item_open . $image . $title . $infobar_open_link . $icon . $doctype . $infobar_close . $item_close;
 

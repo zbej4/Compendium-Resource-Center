@@ -99,7 +99,13 @@ class Compendium_Resources
         echo $topic_menu_close . $type_menu_open;
         foreach ($document_types as $doctype){
             $docobj = get_post_type_object($doctype);
-            echo'<option value="' . sanitize_title_with_dashes($doctype) .'">'. $docobj->label .'</option>';
+            if ($docobj->label == "Posts"){
+                echo'<option value="' . sanitize_title_with_dashes($doctype) .'">Blog Posts</option>';
+            }
+            else {
+                echo'<option value="' . sanitize_title_with_dashes($doctype) .'">'. $docobj->label .'</option>';
+            }
+
         }
         echo $type_menu_close . $filter_form_close . $search_form . '</div></form></div></div>';
 
@@ -476,21 +482,21 @@ class Compendium_Resources
                 return array(
                     'name' => 'Analyst Report',
                     'plural' => 'Analyst Reports',
-                    'dashicon' => 'dashicons-analytics',
+                    'dashicons' => 'dashicons-analytics',
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" enable-background="new 0 0 100 100"><style type="text/css">.st0{fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;} .st1{fill:none;stroke:#000;stroke-width:2;stroke-linejoin:round;stroke-miterlimit:10;}</style><circle class="st0 line" cx="87" cy="59.8" r="7.8"/><circle class="st0 line" cx="87" cy="87.2" r="7.8"/><circle class="st0 line" cx="55.8" cy="75.4" r="7.8"/><path class="st0 line" d="M62.7 71.9l17.4-8.6M63.1 78.2l16.6 6.2"/><path class="st1 line" d="M46 87.2H4.9V5H48l19.5 19.6v33.2"/><path class="st0 line" d="M48 5v19.6h19.5M16.6 32.4v39.1h23.5M16.6 55.9l10.8-10.8 7.8 7.8 12.7-12.7"/></svg>'
                 );
             case 'asset':
                 return array(
                     'name' => 'Asset',
                     'plural' => 'Assets',
-                    'dashicon' => 'dashicons-smartphone',
+                    'dashicons' => 'dashicons-smartphone',
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" enable-background="new 0 0 100 100"><style type="text/css">.st0{fill:none;stroke:#000;stroke-width:2;stroke-miterlimit:10;}</style><path class="st0" d="M26.7 17.7h46.6v64.1H26.7z"/><path class="st0 line" d="M26.7 81.8v6c0 5.5 3.7 9.9 8.3 9.9h30c4.6 0 8.3-4.5 8.3-9.9v-6H26.7zM50 93.1c-1.8 0-3.3-1.5-3.3-3.3s1.5-3.3 3.3-3.3 3.3 1.5 3.3 3.3-1.5 3.3-3.3 3.3zM73.3 17.7v-5.5c0-5.5-3.7-9.9-8.3-9.9H35c-4.6 0-8.3 4.5-8.3 9.9v5.5h46.6zM41.7 8.5h16.7c.9 0 1.7.9 1.7 2s-.7 2-1.7 2H41.7c-.9 0-1.7-.9-1.7-2s.7-2 1.7-2z"/></svg>'
                 );
             case 'audit_report':
                 return array(
                     'name'=> 'Audit Report',
                     'plural' => 'Audit Reports',
-                    'dashicon' => 'dashicons-chart-line',
+                    'dashicons' => 'dashicons-chart-line',
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" enable-background="new 0 0 100 100"><style type="text/css">.st0{fill:none;stroke:#000;stroke-width:2;stroke-linejoin:round;stroke-miterlimit:10;} .st1{fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}</style><path class="st0 line" d="M85.6 70.7c0 8.2-6.7 14.9-14.9 14.9s-14.9-6.7-14.9-14.9 6.7-14.9 14.9-14.9c8.2.1 14.9 6.7 14.9 14.9z"/><path class="st1 line" d="M81.2 81.3L94.9 95"/><path class="st0 line" d="M51.8 87.2H5L4.9 5H48l19.5 19.6v21.5"/><path class="st1 line" d="M48 5v19.6h19.5M16.7 32.4v39.1h23.5M16.7 55.9l10.7-10.8 7.9 7.8L48 40.2"/></svg>'
                 );
 
@@ -498,7 +504,7 @@ class Compendium_Resources
                 return array(
                     'name'=> 'Award',
                     'plural' => 'Awards',
-                    'dashicon' => 'data:image/svg+xml;base64,' . base64_encode( '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 32 32"><path fill="black" d="M26 6v-4h-20v4h-6v4c0 3.314 2.686 6 6 6 0.627 0 1.232-0.096 1.801-0.275 1.443 2.063 3.644 3.556 6.199 4.075v6.2h-2c-2.209 0-4 1.791-4 4h16c0-2.209-1.791-4-4-4h-2v-6.2c2.555-0.519 4.756-2.012 6.199-4.075 0.568 0.179 1.173 0.275 1.801 0.275 3.314 0 6-2.686 6-6v-4h-6zM6 13.625c-1.999 0-3.625-1.626-3.625-3.625v-2h3.625v2c0 1.256 0.232 2.457 0.655 3.565-0.213 0.039-0.431 0.060-0.655 0.060zM29.625 10c0 1.999-1.626 3.625-3.625 3.625-0.224 0-0.442-0.021-0.655-0.060 0.423-1.107 0.655-2.309 0.655-3.565v-2h3.625v2z"></path></svg>' ),
+                    'dashicons' => 'data:image/svg+xml;base64,' . base64_encode( '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 32 32"><path fill="black" d="M26 6v-4h-20v4h-6v4c0 3.314 2.686 6 6 6 0.627 0 1.232-0.096 1.801-0.275 1.443 2.063 3.644 3.556 6.199 4.075v6.2h-2c-2.209 0-4 1.791-4 4h16c0-2.209-1.791-4-4-4h-2v-6.2c2.555-0.519 4.756-2.012 6.199-4.075 0.568 0.179 1.173 0.275 1.801 0.275 3.314 0 6-2.686 6-6v-4h-6zM6 13.625c-1.999 0-3.625-1.626-3.625-3.625v-2h3.625v2c0 1.256 0.232 2.457 0.655 3.565-0.213 0.039-0.431 0.060-0.655 0.060zM29.625 10c0 1.999-1.626 3.625-3.625 3.625-0.224 0-0.442-0.021-0.655-0.060 0.423-1.107 0.655-2.309 0.655-3.565v-2h3.625v2z"></path></svg>' ),
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" enable-background="new 0 0 32 32"><style type="text/css">.svg-award{ stroke-width:1; stroke: #4c4c4c; fill:none; }</style><path class="svg-award" d="M26 6v-4h-20v4h-6v4c0 3.314 2.686 6 6 6 0.627 0 1.232-0.096 1.801-0.275 1.443 2.063 3.644 3.556 6.199 4.075v6.2h-2c-2.209 0-4 1.791-4 4h16c0-2.209-1.791-4-4-4h-2v-6.2c2.555-0.519 4.756-2.012 6.199-4.075 0.568 0.179 1.173 0.275 1.801 0.275 3.314 0 6-2.686 6-6v-4h-6zM6 13.625c-1.999 0-3.625-1.626-3.625-3.625v-2h3.625v2c0 1.256 0.232 2.457 0.655 3.565-0.213 0.039-0.431 0.060-0.655 0.060zM29.625 10c0 1.999-1.626 3.625-3.625 3.625-0.224 0-0.442-0.021-0.655-0.060 0.423-1.107 0.655-2.309 0.655-3.565v-2h3.625v2z"></path></svg>'
                 );
 
@@ -506,7 +512,7 @@ class Compendium_Resources
                 return array(
                     'name'=> 'Bar',
                     'plural' => 'Bars',
-                    'dashicon' => 'data:image/svg+xml;base64,' . base64_encode( '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 32 32"><path fill="black" d="M27.786 5.618c0.236-0.301 0.28-0.711 0.113-1.055s-0.517-0.563-0.899-0.563h-22c-0.383 0-0.732 0.219-0.899 0.563s-0.123 0.754 0.113 1.055l9.786 12.455v11.927h-3c-0.552 0-1 0.448-1 1s0.448 1 1 1h10c0.552 0 1-0.448 1-1s-0.448-1-1-1h-3v-11.927l9.786-12.455zM24.943 6l-3.143 4h-11.599l-3.143-4h17.885z"></path></svg>' ),
+                    'dashicons' => 'data:image/svg+xml;base64,' . base64_encode( '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 32 32"><path fill="black" d="M27.786 5.618c0.236-0.301 0.28-0.711 0.113-1.055s-0.517-0.563-0.899-0.563h-22c-0.383 0-0.732 0.219-0.899 0.563s-0.123 0.754 0.113 1.055l9.786 12.455v11.927h-3c-0.552 0-1 0.448-1 1s0.448 1 1 1h10c0.552 0 1-0.448 1-1s-0.448-1-1-1h-3v-11.927l9.786-12.455zM24.943 6l-3.143 4h-11.599l-3.143-4h17.885z"></path></svg>' ),
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" enable-background="new 0 0 32 32"><style type="text/css">.svg-bar{ stroke-width:1; stroke: #4c4c4c; fill:none; }</style><path class="svg-bar" d="M27.786 5.618c0.236-0.301 0.28-0.711 0.113-1.055s-0.517-0.563-0.899-0.563h-22c-0.383 0-0.732 0.219-0.899 0.563s-0.123 0.754 0.113 1.055l9.786 12.455v11.927h-3c-0.552 0-1 0.448-1 1s0.448 1 1 1h10c0.552 0 1-0.448 1-1s-0.448-1-1-1h-3v-11.927l9.786-12.455zM24.943 6l-3.143 4h-11.599l-3.143-4h17.885z"></path></svg>'
                 );
 
@@ -560,6 +566,13 @@ class Compendium_Resources
                     'plural' => 'Case Studies',
                     'dashicons' => 'dashicons-media-document',
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" enable-background="new 0 0 100 100"><style type="text/css">.st0{fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;} .st1{fill:none;stroke:#000;stroke-width:2;stroke-linejoin:round;stroke-miterlimit:10;} .st2{fill:#000;}</style><path class="st0 line" d="M16.7 28.5h17.6M16.7 40.2H48M16.7 51.9h23.4M16.7 63.7h19.5"/><path class="st1 line" d="M94.9 71.5c0 13-10.5 23.5-23.5 23.5C58.5 95 48 84.5 48 71.5S58.5 48 71.4 48c13 0 23.5 10.5 23.5 23.5zM94.9 71.5c0 13-10.5 23.5-23.5 23.5C58.5 95 48 84.5 48 71.5S58.5 48 71.4 48c13 0 23.5 10.5 23.5 23.5zM46 87.2H4.9V5H48l19.5 19.6v17.6"/><path class="st0 line" d="M48 5v19.6h19.5"/><path class="st2 text" d="M64.2 62.1c-2.5 0-4.5.8-6 2.5s-2.2 4-2.2 6.9c0 3 .7 5.3 2.1 7s3.4 2.5 6 2.5c1.6 0 3.4-.3 5.5-.9v2.3c-1.6.6-3.6.9-5.9.9-3.4 0-6-1-7.8-3.1s-2.8-5-2.8-8.7c0-2.4.4-4.4 1.3-6.2.9-1.8 2.2-3.1 3.8-4.1 1.7-1 3.6-1.4 5.9-1.4 2.4 0 4.5.4 6.3 1.3l-1.1 2.3c-1.6-.9-3.3-1.3-5.1-1.3zM87.6 76.9c0 2-.7 3.6-2.2 4.7-1.5 1.1-3.5 1.7-6 1.7-2.7 0-4.8-.4-6.3-1.1v-2.6c.9.4 2 .7 3.1.9 1.1.2 2.2.3 3.3.3 1.8 0 3.1-.3 4-1 .9-.7 1.3-1.6 1.3-2.8 0-.8-.2-1.4-.5-2s-.9-1-1.6-1.4c-.7-.4-1.9-.9-3.4-1.5-2.1-.8-3.7-1.7-4.6-2.7-.9-1-1.4-2.4-1.4-4.1 0-1.8.7-3.2 2-4.2s3.1-1.6 5.3-1.6c2.3 0 4.4.4 6.3 1.3l-.8 2.3c-1.9-.8-3.7-1.2-5.5-1.2-1.4 0-2.5.3-3.3.9s-1.2 1.4-1.2 2.5c0 .8.1 1.4.4 2s.8 1 1.5 1.4c.7.4 1.8.9 3.2 1.4 2.4.9 4.1 1.8 5 2.8 1 1.1 1.4 2.4 1.4 4z"/></svg>'
+                );
+            case 'checklist':
+                return array(
+                    'name'=> 'Checklist',
+                    'plural' => 'Checklists',
+                    'dashicons' => 'dashicons-media-text',
+                    'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" enable-background="new 0 0 100 100"><style type="text/css">.st0{fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;} .st1{fill:none;stroke:#000;stroke-width:2;stroke-linejoin:round;stroke-miterlimit:10;}</style><path class="st0 line" d="M16.7 28.5h17.6M16.7 40.2H48M16.7 52h23.5M16.7 63.7h19.5"/><path class="st1 line" d="M95 71.4c0 13-10.5 23.5-23.5 23.5S48 84.4 48 71.4s10.5-23.5 23.5-23.5S95 58.5 95 71.4z"/><path class="st0 line" d="M84.3 65L69.4 81.4 58.7 70.7"/><path class="st1 line" d="M46.1 87.2H4.9V5H48l19.6 19.6v17.6"/><path class="st0 line" d="M48 5v19.6h19.6"/></svg>'
                 );
             case 'cost_allocation':
                 return array(
@@ -649,7 +662,7 @@ class Compendium_Resources
                 return array(
                     'name'=> 'Restaurant',
                     'plural' => 'Restaurants',
-                    'dashicon' => 'data:image/svg+xml;base64,' . base64_encode( '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 32 32"> <path fill="black" d="M7 0c-3.314 0-6 3.134-6 7 0 3.31 1.969 6.083 4.616 6.812l-0.993 16.191c-0.067 1.098 0.778 1.996 1.878 1.996h1c1.1 0 1.945-0.898 1.878-1.996l-0.993-16.191c2.646-0.729 4.616-3.502 4.616-6.812 0-3.866-2.686-7-6-7zM27.167 0l-1.667 10h-1.25l-0.833-10h-0.833l-0.833 10h-1.25l-1.667-10h-0.833v13c0 0.552 0.448 1 1 1h2.604l-0.982 16.004c-0.067 1.098 0.778 1.996 1.878 1.996h1c1.1 0 1.945-0.898 1.878-1.996l-0.982-16.004h2.604c0.552 0 1-0.448 1-1v-13h-0.833z"></path></svg>' ),
+                    'dashicons' => 'data:image/svg+xml;base64,' . base64_encode( '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 32 32"> <path fill="black" d="M7 0c-3.314 0-6 3.134-6 7 0 3.31 1.969 6.083 4.616 6.812l-0.993 16.191c-0.067 1.098 0.778 1.996 1.878 1.996h1c1.1 0 1.945-0.898 1.878-1.996l-0.993-16.191c2.646-0.729 4.616-3.502 4.616-6.812 0-3.866-2.686-7-6-7zM27.167 0l-1.667 10h-1.25l-0.833-10h-0.833l-0.833 10h-1.25l-1.667-10h-0.833v13c0 0.552 0.448 1 1 1h2.604l-0.982 16.004c-0.067 1.098 0.778 1.996 1.878 1.996h1c1.1 0 1.945-0.898 1.878-1.996l-0.982-16.004h2.604c0.552 0 1-0.448 1-1v-13h-0.833z"></path></svg>' ),
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" enable-background="new 0 0 32 32"><style type="text/css">.svg-restaurant{ stroke-width:1; stroke: #4c4c4c; fill:none; }</style><path class="svg-restaurant" d="M7 0c-3.314 0-6 3.134-6 7 0 3.31 1.969 6.083 4.616 6.812l-0.993 16.191c-0.067 1.098 0.778 1.996 1.878 1.996h1c1.1 0 1.945-0.898 1.878-1.996l-0.993-16.191c2.646-0.729 4.616-3.502 4.616-6.812 0-3.866-2.686-7-6-7zM27.167 0l-1.667 10h-1.25l-0.833-10h-0.833l-0.833 10h-1.25l-1.667-10h-0.833v13c0 0.552 0.448 1 1 1h2.604l-0.982 16.004c-0.067 1.098 0.778 1.996 1.878 1.996h1c1.1 0 1.945-0.898 1.878-1.996l-0.982-16.004h2.604c0.552 0 1-0.448 1-1v-13h-0.833z"></path></svg>'
                 );
             case 'saas':
@@ -677,7 +690,7 @@ class Compendium_Resources
                 return array(
                     'name'=> 'Staff',
                     'plural' => 'Staff',
-                    'dashicon' => 'data:image/svg+xml;base64,' . base64_encode( '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 32 32"> <path fill="black" d="M10 6c0-3.314 2.686-6 6-6s6 2.686 6 6c0 3.314-2.686 6-6 6s-6-2.686-6-6zM24.002 14h-1.107l-6.222 12.633 2.327-11.633-3-3-3 3 2.327 11.633-6.222-12.633h-1.107c-3.998 0-3.998 2.687-3.998 6v10h24v-10c0-3.313 0-6-3.998-6z"></path></svg>' ),
+                    'dashicons' => 'data:image/svg+xml;base64,' . base64_encode( '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 32 32"><path fill="black" d="M10 6c0-3.314 2.686-6 6-6s6 2.686 6 6c0 3.314-2.686 6-6 6s-6-2.686-6-6zM24.002 14h-1.107l-6.222 12.633 2.327-11.633-3-3-3 3 2.327 11.633-6.222-12.633h-1.107c-3.998 0-3.998 2.687-3.998 6v10h24v-10c0-3.313 0-6-3.998-6z"></path></svg>' ),
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" enable-background="new 0 0 32 32"><style type="text/css">.svg-staff{ stroke-width:1; stroke: #4c4c4c; fill:none; }</style><path class="svg-staff" d="M10 6c0-3.314 2.686-6 6-6s6 2.686 6 6c0 3.314-2.686 6-6 6s-6-2.686-6-6zM24.002 14h-1.107l-6.222 12.633 2.327-11.633-3-3-3 3 2.327 11.633-6.222-12.633h-1.107c-3.998 0-3.998 2.687-3.998 6v10h24v-10c0-3.313 0-6-3.998-6z"></path></svg>'
                 );
             case 'tem':
@@ -733,14 +746,14 @@ class Compendium_Resources
                 return array(
                     'name'=> 'YouTube',
                     'plural' => 'YouTube',
-                    'dashicon' => 'data:image/svg+xml;base64,' . base64_encode( '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 32 32"> <path fill="black" d="M31.681 9.6c0 0-0.313-2.206-1.275-3.175-1.219-1.275-2.581-1.281-3.206-1.356-4.475-0.325-11.194-0.325-11.194-0.325h-0.012c0 0-6.719 0-11.194 0.325-0.625 0.075-1.987 0.081-3.206 1.356-0.963 0.969-1.269 3.175-1.269 3.175s-0.319 2.588-0.319 5.181v2.425c0 2.587 0.319 5.181 0.319 5.181s0.313 2.206 1.269 3.175c1.219 1.275 2.819 1.231 3.531 1.369 2.563 0.244 10.881 0.319 10.881 0.319s6.725-0.012 11.2-0.331c0.625-0.075 1.988-0.081 3.206-1.356 0.962-0.969 1.275-3.175 1.275-3.175s0.319-2.587 0.319-5.181v-2.425c-0.006-2.588-0.325-5.181-0.325-5.181zM12.694 20.15v-8.994l8.644 4.513-8.644 4.481z"></path></svg>' ),
+                    'dashicons' => 'data:image/svg+xml;base64,' . base64_encode( '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 32 32"> <path fill="black" d="M31.681 9.6c0 0-0.313-2.206-1.275-3.175-1.219-1.275-2.581-1.281-3.206-1.356-4.475-0.325-11.194-0.325-11.194-0.325h-0.012c0 0-6.719 0-11.194 0.325-0.625 0.075-1.987 0.081-3.206 1.356-0.963 0.969-1.269 3.175-1.269 3.175s-0.319 2.588-0.319 5.181v2.425c0 2.587 0.319 5.181 0.319 5.181s0.313 2.206 1.269 3.175c1.219 1.275 2.819 1.231 3.531 1.369 2.563 0.244 10.881 0.319 10.881 0.319s6.725-0.012 11.2-0.331c0.625-0.075 1.988-0.081 3.206-1.356 0.962-0.969 1.275-3.175 1.275-3.175s0.319-2.587 0.319-5.181v-2.425c-0.006-2.588-0.325-5.181-0.325-5.181zM12.694 20.15v-8.994l8.644 4.513-8.644 4.481z"></path></svg>' ),
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" enable-background="new 0 0 32 32"><style type="text/css">.svg-youtube{ stroke-width:1; stroke: #4c4c4c; fill:none; }</style><path class="svg-youtube" d="M31.681 9.6c0 0-0.313-2.206-1.275-3.175-1.219-1.275-2.581-1.281-3.206-1.356-4.475-0.325-11.194-0.325-11.194-0.325h-0.012c0 0-6.719 0-11.194 0.325-0.625 0.075-1.987 0.081-3.206 1.356-0.963 0.969-1.269 3.175-1.269 3.175s-0.319 2.588-0.319 5.181v2.425c0 2.587 0.319 5.181 0.319 5.181s0.313 2.206 1.269 3.175c1.219 1.275 2.819 1.231 3.531 1.369 2.563 0.244 10.881 0.319 10.881 0.319s6.725-0.012 11.2-0.331c0.625-0.075 1.988-0.081 3.206-1.356 0.962-0.969 1.275-3.175 1.275-3.175s0.319-2.587 0.319-5.181v-2.425c-0.006-2.588-0.325-5.181-0.325-5.181zM12.694 20.15v-8.994l8.644 4.513-8.644 4.481z"></path></svg>'
                 );
             default:
                 return array(
                     'name'=> '',
                     'plural' => '',
-                    'dashicon' => 'dashicons-admin-post',
+                    'dashicons' => 'dashicons-admin-post',
                     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" enable-background="new 0 0 100 100"><style type="text/css">.st0{fill:none;stroke:#000;stroke-width:3;stroke-linejoin:round;stroke-miterlimit:10;} .st1{fill:none;stroke:#000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;} .st4{fill:none;stroke:#000;stroke-width:3;stroke-miterlimit:10;}</style><path class="st0 line" d="M49 91.3H4.5v-89h46.6l21.2 21.2v36"/><path class="st1 line" d="M51.1 2.3v21.2h21.2"/><path class="st4 line" d="M62.81 79.39l15.98-15.98 10.747 10.748-15.98 15.98zM58.4 84.8l-3.1 10.8c-.2.6 0 1.2.4 1.6.3.3.7.5 1.2.5.2 0 .3 0 .5-.1l10.8-3.1-9.8-9.7zM95.1 66.3l-8.4-8.4c-.7-.7-1.7-.7-2.4 0l-5.5 5.5 10.8 10.8 5.5-5.5c.6-.7.6-1.7 0-2.4zM19.4 35.4l6.3 6.3 10.5-10.5M40.7 39.7h21M40.7 56.7h21M19.4 52.5l6.3 6.3 10.5-10.5"/></svg>'
                 );
         }

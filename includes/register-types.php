@@ -22,8 +22,8 @@ function compendium_register_type($slug, $name, $pname, $dicon) {
             'not_found_in_trash' => 'No '.$pname.' found in trash',
         ),
         'public' => true,
-        'menu_position' => 55,
-        'supports' => array('title','editor','thumbnail'),
+        'menu_position' => 35,
+        'supports' => array('title','editor','thumbnail','excerpt'),
         'menu_icon' => $dicon,
         'rewrite' => array(
             'slug' => 'resource-center/' . $pt_slug,

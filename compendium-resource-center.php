@@ -241,7 +241,7 @@ function compendium_resource_center() {
             $activePosts[] = $post_type;
         }
     }
-
+    sort($activePosts);
 
     return show_compendium_content($activePosts);
 }
@@ -371,6 +371,7 @@ function compendium_resource_options() {
         // Check hidden field is set to verify submitted by user
         if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ) {
             // Get enabled post type values
+            $compendium_options = array();
             foreach($compendium_active_posts as $option) {
                 if(isset($_POST[$option['db_name']])) {
                     $compendium_options[$option['db_name']] = $_POST[$option['db_name']];
@@ -703,7 +704,7 @@ function compendium_resource_post_options(){
                         <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('expense_management')['icon']; ?></div></td>
                     </tr>
                     <tr>
-                        <td>fact_sheet</td>
+                        <td>fact_sheet, checklist</td>
                         <td><div class="resource__icon"><? echo Compendium_Resources::get_meta_info('fact_sheet')['icon']; ?></div></td>
                     </tr>
                     <tr>

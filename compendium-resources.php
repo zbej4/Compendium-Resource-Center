@@ -59,6 +59,8 @@ class Compendium_Resources
 
         //Build Default URL
         $url = $_SERVER['HTTP_HOST'].strtok($_SERVER['REQUEST_URI'],'?');
+        $pattern = '/\/page\/*[0-9]*\/*/';
+        $url = preg_replace( $pattern, '', $url);
 
         $clear_btn = '<a href="//'. $url . '" title="Reset" class="clear_form_link">Reset</a>';
         $search_icon = '<a href="#" title="Search" class="search_form_link"><i class="fa fa-search"></i></a>';

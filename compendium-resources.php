@@ -192,7 +192,7 @@ class Compendium_Resources
 
         $output .= $layer_open;
 
-        if ( !is_paged() && $featured ) {
+        if ( !is_paged() && $featured['value'] === 1 ) {
             //Copy query args to maintain filters and original query
             $featured_args = $query_args;
 
@@ -280,6 +280,8 @@ class Compendium_Resources
             $args['posts_per_page'] = $args['posts_per_page'] - count($do_not_duplicate);
         }
 
+
+
         $documents = new WP_Query($args);
 
         //Pagination
@@ -349,7 +351,7 @@ class Compendium_Resources
             wp_reset_postdata();
         }
         else if (!$documents->have_posts() && !$featured_exists) {
-            $output = $layer_open . '<h2 style="text-align:center;">No Resources Found</h2>' . $layer_close;
+            $output = $layer_open . '<h2 style="text-align:center;">No Resources Found, Please Try Again</h2>' . $layer_close;
         }
         echo $output;
     }

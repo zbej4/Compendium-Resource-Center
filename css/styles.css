@@ -422,30 +422,6 @@ p.resource__doctype {
     float:right;
     color:#4c4c4c;
 }
-.layers .layer--resources .resource.case-study {
-    background:#828a99;
-}
-.resource.case-study .resource__image{
-    height:100%;
-    position:absolute;
-    top:0;
-    left:0;
-    z-index:90;
-}
-.resource.case-study .resource__image > img {
-    border-bottom:none;
-}
-.resource.case-study .resource__link{
-    position:absolute;
-    bottom:35px;
-    left:-10px;
-    padding:10px 15px;
-    width:101%;
-    z-index:95;
-    background:rgba(255,255,255,0.8);
-}
-.resource.case-study .info_link{
-}
 
 @media(max-width:1132px){
 

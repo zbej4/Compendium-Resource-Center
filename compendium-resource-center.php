@@ -289,7 +289,7 @@ function compendium_register_meta_fields() {
                     array(
                         'key' => 'field_58003aed89824',
                         'label' => 'External Url',
-                        'name' => 'document_external_url',
+                        'name' => 'compendium_external_url',
                         'prefix' => '',
                         'type' => 'text',
                         'instructions' => 'Please enter the external URL to route end-user to, such as https://www.wordpress.org',

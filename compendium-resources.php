@@ -166,6 +166,9 @@ class Compendium_Resources
         $image_open = '<div class="resource__image">';
         $image_close = '</div>';
 
+        $info_open = '<div class="resource__info_wrapper">';
+        $info_close = '</div>';
+
         $infobar_open = '<a class="info_link" href="%LINK%"><div class="resource__infobar">';
         $infobar_close = '<i class="fa fa-angle-right"></i></div></a>';
 
@@ -264,7 +267,7 @@ class Compendium_Resources
                         $image = get_the_post_thumbnail($id, 'medium');
                         $image = empty($image) ? $image_open . '<img src="' . plugins_url( 'css/images/placeholder.jpg', __FILE__ ) . '" alt="">' . $share . $image_close : $image_open . '<img src="' . $image . '" alt="">' . $share . $image_close;
 
-                        $output .= $item_open . $featured_icon . $image . $title . $infobar_open_link . $icon . $doctype . $infobar_close . $item_close;
+                        $output .= $item_open . $featured_icon . $image . $info_open . $title . $infobar_open_link . $icon . $doctype . $infobar_close . $info_close . $item_close;
 
                     }
 
@@ -337,7 +340,7 @@ class Compendium_Resources
                 $image = get_the_post_thumbnail($id, 'medium');
                 $image = empty($image) ? $image_open . '<img src="' . plugins_url( 'css/images/placeholder.jpg', __FILE__ ) . '" alt="">' . $share . $image_close : $image_open . '<img src="' . $image . '" alt="">' . $share . $image_close;
 
-                $output .= $item_open . $image . $title . $infobar_open_link . $icon . $doctype . $infobar_close . $item_close;
+                $output .= $item_open . $image . $info_open . $title . $infobar_open_link . $icon . $doctype . $infobar_close . $info_close . $item_close;
 
             }
 
@@ -346,7 +349,7 @@ class Compendium_Resources
             wp_reset_postdata();
         }
         else if (!$documents->have_posts() && !$featured_exists) {
-            $output = $layer_open . '<h2 style="text-align:center;">No posts found</h2>' . $layer_close;
+            $output = $layer_open . '<h2 style="text-align:center;">No Resources Found</h2>' . $layer_close;
         }
         echo $output;
     }

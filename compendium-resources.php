@@ -115,10 +115,12 @@ class Compendium_Resources
 
 
         // The posts
+        $paged = ( get_query_var( 'paged' ) ) ? get_query_var('paged') : 1;
         $args = array(
             'post_type' => $document_types,
             'post_status' => 'publish',
             'posts_per_page' => get_option('compendium-posts-per-page')['value'],
+            'paged' => $paged,
             'tax_query' => array(
                 'relation' => 'OR'
             )
@@ -276,7 +278,6 @@ class Compendium_Resources
 
             //Prepare for remaining posts query
             $args['post__not_in']=$do_not_duplicate;
-            $args['paged'] = get_query_var( 'paged' );
             $args['posts_per_page'] = $args['posts_per_page'] - count($do_not_duplicate);
         }
 

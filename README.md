@@ -15,6 +15,9 @@ Finally, add the shortcode [compendium] to the page that you would like the reso
 
 ###Change log
 
+#####Version 1.0
+* Resolved bug that would cause posts to not display when using the 'Featured post' attribute
+
 #####Version 0.8
 * Added feature to create custom post types
 * Removed enable post type feature - user can simply use a slug provided in the table and name their post type by preference
@@ -41,7 +44,7 @@ Finally, add the shortcode [compendium] to the page that you would like the reso
 
 #####Version 0.5
 * Added external url option
-* Available Icon list styles changed for easier viewing. 
+* Available Icon list styles changed for easier viewing.
 
 #####Version 0.4.2
 * Changed to only allow for public post types in resource center.

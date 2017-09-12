@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Compendium Resource Center
  * Description: Provides the functionality to create and maintain a resource center that integrates several post types and categories.
- * Version:	 0.8
+ * Version:	 1.0
  * Author: Brandon Jones
  * Text Domain: compendium-resource-center
  */

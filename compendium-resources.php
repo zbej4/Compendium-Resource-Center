@@ -153,208 +153,185 @@ class Compendium_Resources
      *-------------------------------------------------------*/
     public static function populate_resources($query_args)
     {
-        //Store original query Arguments
-        $args = $query_args;
-        $do_not_duplicate = '';
-        $featured_per_page = get_option('compendium-featured-per-page')['value'];
-        $featured_exists = false;
+      //Store original query Arguments and copy to new arrays
+      $args = $query_args;
+      $featured_args = $query_args;
+      $all_args = $query_args;
 
-        //Markup
-        $layer_open = '<section class="layer layer--resources editor-styles form-styles"><div class="inner clearfix">';
-        $layer_close = '</div></section>';
+      $featured_ids = array();
+      $all_ids = array();
 
-        $item_close = '</div>';
+      $featured_per_page = get_option('compendium-featured-per-page')['value'];
 
-        $image_open = '<div class="resource__image">';
-        $image_close = '</div>';
+      //Markup
+      $layer_open = '<section class="layer layer--resources editor-styles form-styles"><div class="inner clearfix">';
+      $layer_close = '</div></section>';
 
-        $info_open = '<div class="resource__info_wrapper">';
-        $info_close = '</div>';
+      $item_close = '</div>';
 
-        $infobar_open = '<a class="info_link" href="%LINK%"><div class="resource__infobar">';
-        $infobar_close = '<i class="fa fa-angle-right"></i></div></a>';
+      $image_open = '<div class="resource__image">';
+      $image_close = '</div>';
 
-        $icon_open = '<div class="resource__icon">';
-        $icon_close = '</div>';
+      $info_open = '<div class="resource__info_wrapper">';
+      $info_close = '</div>';
 
-        $doctype_open = '<p class="resource__doctype">';
-        $doctype_close = '</p>';
+      $infobar_open = '<a class="info_link" href="%LINK%"><div class="resource__infobar">';
+      $infobar_close = '<i class="fa fa-angle-right"></i></div></a>';
 
-        $link_open = '<a class="resource__link" href="%LINK%">';
-        $link_close = '</a>';
+      $icon_open = '<div class="resource__icon">';
+      $icon_close = '</div>';
 
-        $featured_icon = '<div class="resource__icon-featured"><i class="fa fa-star"></i></div>';
+      $doctype_open = '<p class="resource__doctype">';
+      $doctype_close = '</p>';
 
-        // Do icons?
-        $icons = get_option('compendium-enable-icons');
-        // Do featured posts?
-        $featured = get_option('compendium-enable-featured-posts');
+      $link_open = '<a class="resource__link" href="%LINK%">';
+      $link_close = '</a>';
 
-        $output = '';
+      $featured_icon = '<div class="resource__icon-featured"><i class="fa fa-star"></i></div>';
 
-        $output .= $layer_open;
+      // Do icons?
+      $icons = get_option('compendium-enable-icons');
+      // Do featured posts?
+      $do_featured = get_option('compendium-enable-featured-posts');
 
-        if ( !is_paged() && $featured['value'] === 1 ) {
-            //Copy query args to maintain filters and original query
-            $featured_args = $query_args;
+      $output = '';
 
-            $featured_args['posts_per_page'] = $featured_per_page;
-            $featured_args['meta_query'] = array(
-                'featured' => array(
-                    'key' => 'compendium-featured-post',
-                    'value' => 'yes'
-                ),
-            );
+      $output .= $layer_open;
 
-            //Featured posts query
-            $documents = new WP_Query($featured_args);
+      if ( !is_paged() && $do_featured['value'] === 1 ) {
 
-                //Make sure we have posts and format them
-                if( !is_wp_error($documents) && $documents->have_posts() )
-                {
-                    $featured_exists = true;
-                    foreach( $documents->posts as $document )
-                    {
-                        $item_open = '<div class="resource featured-resource %TYPE%">';
+          $featured_args['posts_per_page'] = $featured_per_page;
+          $featured_args['meta_query'] = array(
+              'featured' => array(
+                  'key' => 'compendium-featured-post',
+                  'value' => 'yes'
+              ),
+          );
 
-                        $id = $document->ID;
+          //Get featured posts in order needed
+          $featured = new WP_Query($featured_args);
+          //Get IDs from array
+          if( !is_wp_error($featured) && $featured->have_posts() )
+          {
+              foreach( $featured->posts as $post )
+              {
+                  $featured_ids[] = $post->ID;
+              }
+          }
+          wp_reset_postdata();
+      }
 
-                        //Store id to not duplicate post
-                        $do_not_duplicate[] = $id;
+      //Get all posts in order
+      $all_args['posts_per_page'] = -1;
+      $allPosts = new WP_Query($all_args);
+      //Get IDs from array
+      if( !is_wp_error($allPosts) && $allPosts->have_posts() )
+      {
+          foreach( $allPosts->posts as $post )
+          {
+              $all_ids[] = $post->ID;
+          }
+      }
+      wp_reset_postdata();
 
-                        // Title
-                        //Check if has external link
-                        $external_link = get_field('compendium_external_url', $id) ?: '';
-                        $final_link = empty($external_link) ? get_permalink($id) : $external_link;
-                        $title = get_the_title($id);
-                        $title = (strlen($title) > 60) ? trim(substr($title, 0, 60))."..." : $title;
-                        $title = str_replace('%LINK%', $final_link, $link_open) . $title . $link_close;
+      //Merge the arrays
+      $merged_ids = array_merge($featured_ids, $all_ids);
+      //Remove duplicates
+      $reordered_ids = array_unique($merged_ids);
 
-                        //Info Link
-                        $infobar_open_link = str_replace('%LINK%', $final_link, $infobar_open);
+      //Set up arguments for paginated posts
+      $args['post__in'] = $reordered_ids;
+      $args['orderby'] = 'post__in';
+      $args['order'] = 'ASC';
 
-                        // Document Type
-                        $docobj = get_post_type_object($document->post_type);
-                        $doctype = $doctype_open . $docobj->label . $doctype_close;
-                        if($document->post_type == 'post')
-                        {
-                            $doctype = $doctype_open . 'Blog Post' . $doctype_close;
-                        }
+      $documents = new WP_Query($args);
 
-                        // Icon for post type
-                        $icon = '';
-                        if($icons['value'])
-                        {
-                            if($document->post_type == 'post')
-                            {
-                                $icon = $icon_open . Compendium_Resources::get_meta_info('rss')['icon'] . $icon_close;
-                            }
-                            else{
-                                $icon = $icon_open . Compendium_Resources::get_meta_info($document->post_type)['icon'] . $icon_close;
-                            }
-                        }
+      //Pagination
+      $pagination = static::display_pagination($documents);
 
-                        //Add class for post type
-                        if($document->post_type == 'post')
-                            $item_open = str_replace( '%TYPE%', 'blog-post', $item_open);
-                        else
-                            $item_open = str_replace( '%TYPE%', $document->post_type, $item_open);
+      // Make sure we have posts and format them
+      if( !is_wp_error($documents) && $documents->have_posts() )
+      {
+          foreach( $documents->posts as $key => $document )
+          {
+              $item_open = '<div class="resource %TYPE%">';
+              $featured_open = '<div class="resource featured-resource %TYPE%">';
+              $id = $document->ID;
 
+              // Title
+              //Check if has external link
+              $external_link = get_field('compendium_external_url', $id) ?: '';
+              $final_link = empty($external_link) ? get_permalink($id) : $external_link;
+              $title = get_the_title($id);
+              //$title = (strlen($title) > 60) ? trim(substr($title, 0, 60))."..." : $title;
+              $title = str_replace('%LINK%', $final_link, $link_open) . $title . $link_close;
 
-                        // Social sharing
-                        // Share
-                        $share = '<a class="resource_social addthis_button_compact" addthis:url="' . get_permalink($document->ID) . '" addthis:title="' . get_the_title($document->ID)	. '"><span>Share</span></a>';
+              //Info Link
+              $infobar_open_link = str_replace('%LINK%', $final_link, $infobar_open);
 
-                        // Image
-                        $image = get_the_post_thumbnail($id, 'medium');
-                        $image = empty($image) ? $image_open . '<img src="' . plugins_url( 'css/images/placeholder.jpg', __FILE__ ) . '" alt="">' . $share . $image_close : $image_open . '<img src="' . $image . '" alt="">' . $share . $image_close;
+              // Excerpt
+              $excerpt = '<p class="resource-excerpt">' . get_the_excerpt($id) . '</p>';
 
-                        $output .= $item_open . $featured_icon . $image . $info_open . $title . $infobar_open_link . $icon . $doctype . $infobar_close . $info_close . $item_close;
+              // Document Type
+              $docobj = get_post_type_object($document->post_type);
+              $doctype = $doctype_open . $docobj->label . $doctype_close;
+              if($document->post_type == 'post')
+              {
+                  $doctype = $doctype_open . 'Blog Post' . $doctype_close;
+              }
 
-                    }
+              // Icon for post type
+              $icon = '';
+              if($icons['value'])
+              {
+                  if($document->post_type == 'post')
+                  {
+                      $icon = $icon_open . Compendium_Resources::get_meta_info('rss')['icon'] . $icon_close;
+                  }
+                  else{
+                      $icon = $icon_open . Compendium_Resources::get_meta_info($document->post_type)['icon'] . $icon_close;
+                  }
+              }
 
-                    wp_reset_postdata();
-                }
-
-            //Prepare for remaining posts query
-            $args['post__not_in']=$do_not_duplicate;
-            $args['posts_per_page'] = $args['posts_per_page'] - count($do_not_duplicate);
-        }
-
-
-
-        $documents = new WP_Query($args);
-
-        //Pagination
-        $pagination = static::display_pagination($documents);
-
-        // Make sure we have posts and format them
-        if( !is_wp_error($documents) && $documents->have_posts() )
-        {
-            foreach( $documents->posts as $document )
-            {
-                $item_open = '<div class="resource %TYPE%">';
-                $id = $document->ID;
-
-                // Title
-                //Check if has external link
-                $external_link = get_field('compendium_external_url', $id) ?: '';
-                $final_link = empty($external_link) ? get_permalink($id) : $external_link;
-                $title = get_the_title($id);
-                $title = (strlen($title) > 60) ? trim(substr($title, 0, 60))."..." : $title;
-                $title = str_replace('%LINK%', $final_link, $link_open) . $title . $link_close;
-
-                //Info Link
-                $infobar_open_link = str_replace('%LINK%', $final_link, $infobar_open);
-
-                // Document Type
-                $docobj = get_post_type_object($document->post_type);
-                $doctype = $doctype_open . $docobj->label . $doctype_close;
-                if($document->post_type == 'post')
-                {
-                    $doctype = $doctype_open . 'Blog Post' . $doctype_close;
-                }
-
-                // Icon for post type
-                $icon = '';
-                if($icons['value'])
-                {
-                    if($document->post_type == 'post')
-                    {
-                        $icon = $icon_open . Compendium_Resources::get_meta_info('rss')['icon'] . $icon_close;
-                    }
-                    else{
-                        $icon = $icon_open . Compendium_Resources::get_meta_info($document->post_type)['icon'] . $icon_close;
-                    }
-                }
-
-                //Add class for post type
-                if($document->post_type == 'post')
-                    $item_open = str_replace( '%TYPE%', 'blog-post', $item_open);
-                else
-                    $item_open = str_replace( '%TYPE%', $document->post_type, $item_open);
+              //Add class for post type
+              if($document->post_type == 'post')
+                  $item_open = str_replace( '%TYPE%', 'blog-post', $item_open);
+              else
+                  $item_open = str_replace( '%TYPE%', $document->post_type, $item_open);
 
 
-                // Social sharing
-                // Share
-                $share = '<a class="resource_social addthis_button_compact" addthis:url="' . get_permalink($document->ID) . '" addthis:title="' . get_the_title($document->ID)	. '"><span>Share</span></a>';
+              // Social sharing
+              // Share
+              $share = '<a class="resource_social addthis_button_compact" addthis:url="' . get_permalink($document->ID) . '" addthis:title="' . get_the_title($document->ID)	. '"><span>Share</span></a>';
 
-                // Image
-                $image = get_the_post_thumbnail($id, 'medium');
-                $image = empty($image) ? $image_open . '<img src="' . plugins_url( 'css/images/placeholder.jpg', __FILE__ ) . '" alt="">' . $share . $image_close : $image_open . '<img src="' . $image . '" alt="">' . $share . $image_close;
+              // Image
+              $image = get_the_post_thumbnail($id, 'medium');
+              $image = empty($image) ? $image_open . '<img src="' . plugins_url( 'css/images/placeholder.jpg', __FILE__ ) . '" alt="">' . $share . $image_close : $image_open . '<img src="' . $image . '" alt="">' . $share . $image_close;
 
-                $output .= $item_open . $image . $info_open . $title . $infobar_open_link . $icon . $doctype . $infobar_close . $info_close . $item_close;
+              if ( !is_paged() && $key < 12 )
+              {
+                  $is_featured = get_field('compendium-featured-post', $id) ?: false;
+                  if ($is_featured){
+                      $output .= $featured_open . $featured_icon . $image . $info_open . $title . $excerpt . $infobar_open_link . $icon . $doctype . $infobar_close . $info_close . $item_close;
+                  }
+                  else{
+                      $output .= $item_open . $image . $info_open . $title . $excerpt . $infobar_open_link . $icon . $doctype . $infobar_close . $info_close . $item_close;
+                  }
+              }
+              else{
+                  $output .= $item_open . $image . $info_open . $title . $excerpt . $infobar_open_link . $icon . $doctype . $infobar_close . $info_close . $item_close;
+              }
 
-            }
+          }
 
-            $output .= '<div class="clearfix"></div>' . $pagination . $layer_close;
+          $output .= '<div class="clearfix"></div>' . $pagination . $layer_close;
 
-            wp_reset_postdata();
-        }
-        else if (!$documents->have_posts() && !$featured_exists) {
-            $output = $layer_open . '<h2 style="text-align:center;">No Resources Found, Please Try Again</h2>' . $layer_close;
-        }
-        echo $output;
+          wp_reset_postdata();
+      }
+      else if ( !$documents->have_posts() ) {
+          $output = $layer_open . '<h2 style="text-align:center;">No Resources Found, Please Try Again</h2>' . $layer_close;
+      }
+      echo $output;
     }
 
     /**--------------------------------------------------------
